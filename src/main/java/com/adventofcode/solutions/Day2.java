@@ -1,5 +1,6 @@
 package com.adventofcode.solutions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +11,13 @@ public enum Day2 implements Solver<Integer> {
     public Integer solvePart1(String input) {
         return parseReports(input).stream()
                 .filter(this::isReportSafe)
+                .mapToInt(r -> 1)
+                .sum();
+    }
+
+    public Integer solvePart2(String input) {
+        return parseReports(input).stream()
+                .filter(this::isDampenedReportSafe)
                 .mapToInt(r -> 1)
                 .sum();
     }
@@ -45,7 +53,25 @@ public enum Day2 implements Solver<Integer> {
         return true;
     }
 
-    List<List<Integer>> parseReports(String input) {
+    private boolean isDampenedReportSafe(List<Integer> report) {
+        if (isReportSafe(report)) {
+            return true;
+        }
+
+        // O(n²)
+        for (int i = 0; i < report.size(); i++) {
+            var reportWithItemRemoved = new ArrayList<>(report);
+            reportWithItemRemoved.remove(i);
+
+            // O(n)
+            if (isReportSafe(reportWithItemRemoved))
+                return true;
+        }
+
+        return false;
+    }
+
+    private List<List<Integer>> parseReports(String input) {
         return input.lines()
                 .map(line -> Arrays.stream(line.split("\\s+"))
                         .map(Integer::parseInt).toList())

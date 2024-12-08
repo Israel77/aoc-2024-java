@@ -24,6 +24,6 @@ public class Day2Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
-        // TODO
+        assertEquals(4, solver.solvePart2(input));
     }
 }
