@@ -9,6 +9,8 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import com.adventofcode.service.SolverService;
 import com.adventofcode.util.Constants.Day;
 import com.adventofcode.util.Constants.Part;
+
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.PUT;
@@ -24,6 +26,7 @@ public class SolverResource {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @RunOnVirtualThread
     public String solve(@RestPath int dayNumber, @RestPath int partNumber,
             @FormParam("input") FileUpload inputPart) throws FileNotFoundException {
 
