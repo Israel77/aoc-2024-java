@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class Day1Test {
-    Solver solver = Day1.INSTANCE;
+    Solver<Integer> solver = Day1.INSTANCE;
 
     @Test
     @DisplayName("Should solve the example given in part 1")
@@ -18,7 +18,7 @@ public class Day1Test {
                 3   9
                 3   3""";
 
-        assertEquals("11", solver.solvePart1(input));
+        assertEquals(11, solver.solvePart1(input));
     }
 
     @Test
@@ -32,6 +32,6 @@ public class Day1Test {
                 3   9
                 3   3""";
 
-        assertEquals("31", solver.solvePart2(input));
+        assertEquals(31, solver.solvePart2(input));
     }
 }

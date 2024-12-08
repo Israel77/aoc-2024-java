@@ -8,12 +8,12 @@ import java.util.stream.IntStream;
 import com.adventofcode.util.Functions;
 import com.adventofcode.util.Pair;
 
-public enum Day1 implements Solver {
+public enum Day1 implements Solver<Integer> {
     INSTANCE;
 
     @Override
-    public String solvePart1(String input) {
-        return Integer.toString(parseLocations(input)
+    public Integer solvePart1(String input) {
+        return parseLocations(input)
                 .flatMap(pair -> {
                     // Sorts the left and right columns
                     var left = pair.first().stream()
@@ -27,14 +27,14 @@ public enum Day1 implements Solver {
                 })
                 .stream()
                 .mapToInt(v -> Math.abs(v.first() - v.second()))
-                .sum());
+                .sum();
     }
 
     @Override
-    public String solvePart2(String input) {
+    public Integer solvePart2(String input) {
         final var locations = parseLocations(input);
-        return Integer.toString(calculateSimilarities(locations)
-                .sum());
+        return calculateSimilarities(locations)
+                .sum();
     }
 
     IntStream calculateSimilarities(Pair<List<Integer>, List<Integer>> locations) {
