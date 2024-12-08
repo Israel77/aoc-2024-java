@@ -2,7 +2,7 @@ package com.adventofcode.util;
 
 public final class Constants {
     private Constants() {
-
+        // Utility class
     }
 
     public static enum Day {

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class Functions {
+    private Functions() {
+        // Utility class
+    }
 
     /**
      * Pairs up each element on the first sequence with the
