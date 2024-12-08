@@ -73,8 +73,6 @@ public enum Day3 implements Solver<Integer> {
             }
         }
 
-        System.out.println("Parsed " + result.size() + " expressions");
-        System.out.println(result);
         return result;
     }
 
