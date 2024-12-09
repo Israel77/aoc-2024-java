@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 public enum Day4 implements Solver<Integer> {
     INSTANCE;
@@ -21,19 +22,16 @@ public enum Day4 implements Solver<Integer> {
 
     @Override
     public Integer solvePart2(String input) {
-        int result = 0;
         var lines = input.lines().toList();
-
         int numOfRows = lines.size();
         int numOfColumns = lines.get(0).length();
 
-        for (int y = 1; y < numOfRows - 1; ++y) {
-            for (int x = 1; x < numOfColumns - 1; ++x) {
-                result += detectX_mas(lines, x, y) ? 1 : 0;
-            }
-        }
-
-        return result;
+        return IntStream.range(1, numOfRows - 1)
+                .parallel()
+                .map(y -> IntStream.range(1, numOfColumns - 1)
+                        .map(x -> detectX_mas(lines, x, y) ? 1 : 0)
+                        .sum())
+                .sum();
     }
 
     boolean detectX_mas(List<String> lines, int x, int y) {
