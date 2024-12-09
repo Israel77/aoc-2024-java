@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 public class Day5Test {
 
-    Solver solver = Day5.INSTANCE;
+    Solver<Integer> solver = Day5.INSTANCE;
 
     String input = """
             47|53
@@ -49,5 +49,6 @@ public class Day5Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
+        assertEquals(123, solver.solvePart2(input));
     }
 }

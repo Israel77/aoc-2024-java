@@ -1,6 +1,7 @@
 package com.adventofcode.solutions;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,26 @@ public enum Day5 implements Solver<Integer> {
         return middlePageSum;
     }
 
+    @Override
+    public Integer solvePart2(String inputString) {
+        Input input = parseInput(inputString);
+        var rules = input.rules;
+        var updates = input.updates;
+        CompareUpdates comparator = new CompareUpdates(rules);
+
+        int middlePageSum = 0;
+
+        for (var update : updates) {
+            if (!validateUpdate(rules, update)) {
+                var fixedUpdate = new ArrayList<>(update);
+                fixedUpdate.sort(comparator);
+                middlePageSum += fixedUpdate.get(fixedUpdate.size() / 2);
+            }
+        }
+
+        return middlePageSum;
+    }
+
     private boolean validateUpdate(List<Pair<Integer, Integer>> rules, List<Integer> update) {
         for (int i = 0; i < update.size(); ++i) {
             var value = update.get(i);
@@ -32,16 +53,7 @@ public enum Day5 implements Solver<Integer> {
                     .filter(pair -> pair.second() == value)
                     .map(Pair::first)
                     .collect(Collectors.toSet());
-            var shouldComeAfter = rules.stream()
-                    .filter(pair -> pair.first() == value)
-                    .map(Pair::second)
-                    .collect(Collectors.toSet());
 
-            var before = update.subList(0, i);
-            for (int n : before) {
-                if (shouldComeAfter.contains(n))
-                    return false;
-            }
             var after = update.subList(i, update.size());
             for (int n : after) {
                 if (shouldComeBefore.contains(n))
@@ -49,12 +61,6 @@ public enum Day5 implements Solver<Integer> {
             }
         }
         return true;
-    }
-
-    @Override
-    public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
     }
 
     Input parseInput(String inputString) {
@@ -87,5 +93,25 @@ public enum Day5 implements Solver<Integer> {
     }
 
     private record Input(List<Pair<Integer, Integer>> rules, List<List<Integer>> updates) {
+    }
+
+    private class CompareUpdates implements Comparator<Integer> {
+        List<Pair<Integer, Integer>> rules;
+
+        public CompareUpdates(List<Pair<Integer, Integer>> rules) {
+            this.rules = rules;
+        }
+
+        @Override
+        public int compare(Integer arg0, Integer arg1) {
+            for (final var pair : rules) {
+                if (pair.first() == arg0 && pair.second() == arg1) {
+                    return -1;
+                } else if (pair.first() == arg1 && pair.second() == arg0) {
+                    return 1;
+                }
+            }
+            return 0;
+        }
     }
 }
