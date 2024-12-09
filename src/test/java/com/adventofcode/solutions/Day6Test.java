@@ -29,6 +29,6 @@ public class Day6Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
-        assertEquals(123, solver.solvePart2(input));
+        assertEquals(6, solver.solvePart2(input));
     }
 }

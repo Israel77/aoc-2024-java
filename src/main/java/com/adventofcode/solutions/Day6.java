@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.adventofcode.util.Pair;
+import com.adventofcode.util.Triple;
 
 public class Day6 implements Solver<Integer> {
     // Parsed from input
@@ -34,6 +35,54 @@ public class Day6 implements Solver<Integer> {
         return visited.size();
     }
 
+    @Override
+    public Integer solvePart2(String input) {
+        parseInput(input);
+        this.currentPosition = this.initialPosition;
+        int count = 0;
+
+        for (int x = 0; x < numOfColumns; x++) {
+            for (int y = 0; y < numOfRows; y++) {
+                var newObstacle = new Pair<>(x, y);
+                count += checkIfLoops(newObstacle) ? 1 : 0;
+                reset();
+            }
+        }
+
+        return count;
+    }
+
+    boolean checkIfLoops(Pair<Integer, Integer> newObstacle) {
+        // NOTE: ALWAYS RESET BEFORE ANY RETURN
+        Set<Pair<Integer, Integer>> previousObstacles = new HashSet<>(obstacles);
+
+        this.obstacles.add(newObstacle);
+        Set<Triple<Integer, Integer, Direction>> visitedWithDirection = new HashSet<>();
+
+        while (0 <= this.currentPosition.first()
+                && this.currentPosition.first() < numOfColumns
+                && 0 <= this.currentPosition.second()
+                && this.currentPosition.second() < numOfRows) {
+            var currentState = new Triple<>(currentPosition.first(), currentPosition.second(), this.direction);
+
+            if (visitedWithDirection.contains(currentState)) {
+                this.obstacles = previousObstacles;
+                return true;
+            }
+
+            visitedWithDirection.add(currentState);
+            updatePosition();
+        }
+
+        this.obstacles = previousObstacles;
+        return false;
+    }
+
+    void reset() {
+        this.currentPosition = this.initialPosition;
+        this.direction = Direction.UP;
+    };
+
     void updatePosition() {
         var directionAsPair = this.direction.asPair();
         var nextPosition = new Pair<>(this.currentPosition.first() + directionAsPair.first(),
@@ -45,12 +94,6 @@ public class Day6 implements Solver<Integer> {
         } else {
             this.currentPosition = nextPosition;
         }
-    }
-
-    @Override
-    public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
     }
 
     void parseInput(String input) {
