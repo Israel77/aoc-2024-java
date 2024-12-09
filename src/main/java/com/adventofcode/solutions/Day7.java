@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.adventofcode.util.Pair;
 
-public enum Day7 implements Solver<Long, BigInteger> {
+public enum Day7 implements Solver<Long, Long> {
     INSTANCE;
 
     @Override
@@ -19,9 +19,15 @@ public enum Day7 implements Solver<Long, BigInteger> {
     }
 
     @Override
-    public BigInteger solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+    public Long solvePart2(String input) {
+        return parseInput(input).parallelStream()
+                .filter(pair -> calculatePossibleResults(
+                        // Convert all values to BigInteger
+                        pair.second().stream().map(BigInteger::valueOf).toList(),
+                        BigInteger.valueOf(pair.first()))
+                        .contains(BigInteger.valueOf(pair.first())))
+                .mapToLong(Pair::first)
+                .sum();
     }
 
     List<Long> calculatePossibleResults(List<Long> values, long threshold) {
@@ -49,6 +55,42 @@ public enum Day7 implements Solver<Long, BigInteger> {
         if (multiply <= threshold) {
             results.add(new Pair<>(multiply, values.size() == 1));
             results.addAll(calculatePossibleResults(multiply, values.subList(1, values.size()), threshold));
+        }
+
+        return results;
+    }
+
+    List<BigInteger> calculatePossibleResults(List<BigInteger> values, BigInteger threshold) {
+        return calculatePossibleResults(values.get(0), values.subList(1, values.size()), threshold)
+                .stream()
+                .filter(Pair::second)
+                .map(Pair::first)
+                .toList();
+    }
+
+    List<Pair<BigInteger, Boolean>> calculatePossibleResults(BigInteger currentValue, List<BigInteger> values,
+            BigInteger threshold) {
+        // The boolean marks whether or not this is a true result
+        // (using all numbers)
+        List<Pair<BigInteger, Boolean>> results = new ArrayList<>();
+
+        if (values.isEmpty() || currentValue.compareTo(threshold) > 1)
+            return results;
+
+        BigInteger add = currentValue.add(values.get(0));
+        BigInteger multiply = currentValue.multiply(values.get(0));
+        BigInteger concat = new BigInteger(currentValue.toString() + values.get(0).toString());
+        if (add.compareTo(threshold) <= 0) {
+            results.add(new Pair<>(add, values.size() == 1));
+            results.addAll(calculatePossibleResults(add, values.subList(1, values.size()), threshold));
+        }
+        if (multiply.compareTo(threshold) <= 0) {
+            results.add(new Pair<>(multiply, values.size() == 1));
+            results.addAll(calculatePossibleResults(multiply, values.subList(1, values.size()), threshold));
+        }
+        if (concat.compareTo(threshold) <= 0) {
+            results.add(new Pair<>(concat, values.size() == 1));
+            results.addAll(calculatePossibleResults(concat, values.subList(1, values.size()), threshold));
         }
 
         return results;
