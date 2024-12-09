@@ -23,9 +23,9 @@ public class Day6 implements Solver<Integer> {
         this.currentPosition = this.initialPosition;
         Set<Pair<Integer, Integer>> visited = new HashSet<>();
 
-        while (0 < this.currentPosition.first()
+        while (0 <= this.currentPosition.first()
                 && this.currentPosition.first() < numOfColumns
-                && 0 < this.currentPosition.second()
+                && 0 <= this.currentPosition.second()
                 && this.currentPosition.second() < numOfRows) {
             visited.add(currentPosition);
             updatePosition();
