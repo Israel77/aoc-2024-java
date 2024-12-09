@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-public enum Day4 implements Solver<Integer> {
+public enum Day4 implements Solver<Integer, Integer> {
     INSTANCE;
 
     ExecutorService executor = Executors.newWorkStealingPool();

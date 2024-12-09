@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import com.adventofcode.util.Pair;
 
-public enum Day5 implements Solver<Integer> {
+public enum Day5 implements Solver<Integer, Integer> {
     INSTANCE;
 
     @Override

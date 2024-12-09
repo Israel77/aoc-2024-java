@@ -6,7 +6,7 @@ import java.util.Set;
 import com.adventofcode.util.Pair;
 import com.adventofcode.util.Triple;
 
-public class Day6 implements Solver<Integer> {
+public class Day6 implements Solver<Integer, Integer> {
     // Parsed from input
     Pair<Integer, Integer> initialPosition;
     Set<Pair<Integer, Integer>> obstacles;

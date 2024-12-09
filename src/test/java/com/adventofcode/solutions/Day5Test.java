@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 public class Day5Test {
 
-    Solver<Integer> solver = Day5.INSTANCE;
+    Solver<Integer, Integer> solver = Day5.INSTANCE;
 
     String input = """
             47|53

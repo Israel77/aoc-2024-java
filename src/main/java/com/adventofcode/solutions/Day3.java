@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public enum Day3 implements Solver<Integer> {
+public enum Day3 implements Solver<Integer, Integer> {
     INSTANCE;
 
     @Override

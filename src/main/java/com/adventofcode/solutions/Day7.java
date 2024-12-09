@@ -1,11 +1,12 @@
 package com.adventofcode.solutions;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.adventofcode.util.Pair;
 
-public enum Day7 implements Solver<Long> {
+public enum Day7 implements Solver<Long, BigInteger> {
     INSTANCE;
 
     @Override
@@ -18,7 +19,7 @@ public enum Day7 implements Solver<Long> {
     }
 
     @Override
-    public Long solvePart2(String input) {
+    public BigInteger solvePart2(String input) {
         // TODO Auto-generated method stub
         return Solver.super.solvePart2(input);
     }

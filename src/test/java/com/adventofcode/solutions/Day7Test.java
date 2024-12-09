@@ -2,11 +2,13 @@ package com.adventofcode.solutions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigInteger;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class Day7Test {
-    Solver<Long> solver = Day7.INSTANCE;
+    Solver<Long, BigInteger> solver = Day7.INSTANCE;
 
     String input = """
             190: 10 19

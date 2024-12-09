@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class Day3Test {
-    Solver<Integer> solver = Day3.INSTANCE;
+    Solver<Integer, Integer> solver = Day3.INSTANCE;
 
     @Test
     @DisplayName("Should solve the example given in part 1")

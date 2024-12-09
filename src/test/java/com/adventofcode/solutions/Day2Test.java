@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 public class Day2Test {
-    Solver<Integer> solver = Day2.INSTANCE;
+    Solver<Integer, Integer> solver = Day2.INSTANCE;
     String input = """
             7 6 4 2 1
             1 2 7 8 9

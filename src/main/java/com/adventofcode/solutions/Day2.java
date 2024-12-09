@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public enum Day2 implements Solver<Integer> {
+public enum Day2 implements Solver<Integer, Integer> {
     INSTANCE;
 
     @Override

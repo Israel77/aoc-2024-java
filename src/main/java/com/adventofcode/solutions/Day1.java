@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 import com.adventofcode.util.Functions;
 import com.adventofcode.util.Pair;
 
-public enum Day1 implements Solver<Integer> {
+public enum Day1 implements Solver<Integer, Integer> {
     INSTANCE;
 
     @Override

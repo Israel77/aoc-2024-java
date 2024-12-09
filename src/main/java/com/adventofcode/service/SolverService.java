@@ -21,7 +21,7 @@ import com.adventofcode.util.Constants.Day;
 import com.adventofcode.util.Constants.Part;
 
 public class SolverService {
-    Solver<?> solverImpl;
+    Solver<?, ?> solverImpl;
     Day day;
     Part part;
     String input;
