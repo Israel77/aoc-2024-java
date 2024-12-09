@@ -2,13 +2,18 @@ package com.adventofcode.solutions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public enum Day4 implements Solver<Integer> {
     INSTANCE;
 
+    ExecutorService executor = Executors.newWorkStealingPool();
+
     @Override
     public Integer solvePart1(String input) {
-        return splitLines(input).stream()
+        return splitLines(input).parallelStream()
                 .mapToInt(this::countOcurrences)
                 .sum();
 
@@ -36,10 +41,23 @@ public enum Day4 implements Solver<Integer> {
     List<String> splitLines(String input) {
         List<String> result = new ArrayList<>();
 
-        result.addAll(splitHorizontalLines(input));
-        result.addAll(splitVerticalLines(input));
-        result.addAll(splitDiagonals(input));
-        result.addAll(splitAntiDiagonals(input));
+        var futures = List.of(
+                CompletableFuture.runAsync(() -> {
+                    result.addAll(splitHorizontalLines(input));
+                }, executor),
+                CompletableFuture.runAsync(() -> {
+                    result.addAll(splitVerticalLines(input));
+                }, executor),
+                CompletableFuture.runAsync(() -> {
+                    result.addAll(splitDiagonals(input));
+                }, executor),
+                CompletableFuture.runAsync(() -> {
+                    result.addAll(splitAntiDiagonals(input));
+                }, executor));
+
+        for (var future : futures) {
+            future.join();
+        }
 
         return result;
     }

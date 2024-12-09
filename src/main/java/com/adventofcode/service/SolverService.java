@@ -30,7 +30,6 @@ public class SolverService {
 
         this.day = day;
         this.part = part;
-        logger.error("Day {}, part {}", day, part);
         this.solverImpl = switch (day) {
             case DAY_1 -> Day1.INSTANCE;
             case DAY_2 -> Day2.INSTANCE;
