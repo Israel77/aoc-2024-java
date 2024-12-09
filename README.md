@@ -12,9 +12,9 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | Day | Part 1 | Part 2 |
 |-----|--------|--------|
 | 1   | ✅      | ✅    |
-| 2   | ❌      | ❌    |
-| 3   | ❌      | ❌    |
-| 4   | ❌      | ❌    |
+| 2   | ✅      | ✅    |
+| 3   | ✅      | ✅    |
+| 4   | ✅      | ❌    |
 | 5   | ❌      | ❌    |
 | 6   | ❌      | ❌    |
 | 7   | ❌      | ❌    |
