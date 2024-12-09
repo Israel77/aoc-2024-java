@@ -29,6 +29,7 @@ public class Day4Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
+        assertEquals(9, solver.solvePart2(input));
     }
 
 }

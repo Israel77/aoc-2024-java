@@ -14,18 +14,44 @@ public enum Day4 implements Solver<Integer> {
     @Override
     public Integer solvePart1(String input) {
         return splitLines(input).parallelStream()
-                .mapToInt(this::countOcurrences)
+                .mapToInt(this::countXmasOcurrences)
                 .sum();
 
     }
 
     @Override
     public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+        int result = 0;
+        var lines = input.lines().toList();
+
+        int numOfRows = lines.size();
+        int numOfColumns = lines.get(0).length();
+
+        for (int y = 1; y < numOfRows - 1; ++y) {
+            for (int x = 1; x < numOfColumns - 1; ++x) {
+                result += detectX_mas(lines, x, y) ? 1 : 0;
+            }
+        }
+
+        return result;
     }
 
-    int countOcurrences(String line) {
+    boolean detectX_mas(List<String> lines, int x, int y) {
+        if (lines.get(y).charAt(x) != 'A') {
+            return false;
+        }
+        char upperLeft = lines.get(y - 1).charAt(x - 1);
+        char upperRight = lines.get(y - 1).charAt(x + 1);
+        char lowerLeft = lines.get(y + 1).charAt(x - 1);
+        char lowerRight = lines.get(y + 1).charAt(x + 1);
+
+        return (upperLeft == 'M' && upperRight == 'M' && lowerLeft == 'S' && lowerRight == 'S')
+                || (upperLeft == 'M' && upperRight == 'S' && lowerLeft == 'M' && lowerRight == 'S')
+                || (upperLeft == 'S' && upperRight == 'M' && lowerLeft == 'S' && lowerRight == 'M')
+                || (upperLeft == 'S' && upperRight == 'S' && lowerLeft == 'M' && lowerRight == 'M');
+    }
+
+    int countXmasOcurrences(String line) {
         int count = 0;
 
         for (int pos = 0; pos <= line.length() - 4; ++pos) {
