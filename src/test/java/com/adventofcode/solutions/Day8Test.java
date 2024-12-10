@@ -32,6 +32,6 @@ public class Day8Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
-        // assertEquals(11387, solver.solvePart2(input));
+        assertEquals(34, solver.solvePart2(input));
     }
 }
