@@ -3,8 +3,11 @@ package com.adventofcode.solutions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
-public enum Day9 implements Solver<Long, Integer> {
+import com.adventofcode.util.MutableIntRange;
+
+public enum Day9 implements Solver<Long, Long> {
     INSTANCE;
 
     @Override
@@ -34,9 +37,45 @@ public enum Day9 implements Solver<Long, Integer> {
     }
 
     @Override
-    public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+    public Long solvePart2(String input) {
+        DiskRanges disk = parseInputAsRanges(input);
+        List<File> files = disk.files();
+        List<MutableIntRange> freeSpace = disk.freeSpace();
+
+        List<File> compressedFiles = new ArrayList<>(files.size());
+        // Iterate over the ids starting from the last
+        for (int id = files.stream()
+                .mapToInt(File::id)
+                .max()
+                .orElseGet(() -> 0); id >= 0; --id) {
+            // Declare as final to allow lambda shenanigans.
+            final int currentId = id;
+            var file = files.stream()
+                    .filter(f -> f.id() == currentId)
+                    .findFirst()
+                    .get();
+
+            boolean canMoveFile = false;
+            for (MutableIntRange freeRange : freeSpace) {
+                if (freeRange.size() >= file.size() && freeRange.start() < file.startPos()) {
+                    canMoveFile = true;
+                    // Move file if there is space available
+                    compressedFiles.add(file.withPos(freeRange.start()));
+                    freeRange.removeFromStart(file.size());
+                    break;
+                }
+            }
+
+            if (!canMoveFile) {
+                // If no space was available, copy the
+                // file unchanged on the output.
+                compressedFiles.add(file);
+            }
+        }
+
+        return compressedFiles.parallelStream()
+                .mapToLong(File::getFileChecksum)
+                .sum();
     }
 
     Disk parseInput(String input) {
@@ -70,6 +109,33 @@ public enum Day9 implements Solver<Long, Integer> {
         return new Disk(files, freeSpace, totalCount);
     }
 
+    DiskRanges parseInputAsRanges(String input) {
+        List<File> files = new ArrayList<>();
+        List<MutableIntRange> freeSpace = new ArrayList<>();
+
+        int fileCount = 0;
+        int freeSpaceCount = 0;
+        int totalCount = 0;
+        int fileId = 0;
+        for (int i = 0; i < input.length(); ++i) {
+            var ch = input.charAt(i);
+            var amount = ch - 48;
+
+            if (i % 2 == 0) {
+                files.add(new File(fileId, totalCount, amount));
+                fileCount += amount;
+                fileId++;
+            } else {
+                freeSpace.add(new MutableIntRange(totalCount, totalCount + amount));
+                freeSpaceCount += amount;
+            }
+
+            totalCount = fileCount + freeSpaceCount;
+        }
+
+        return new DiskRanges(files, freeSpace, totalCount);
+    }
+
     private static List<FileBlock> generateFileBlockRange(int id, int startPosition, int amount) {
         List<FileBlock> result = new ArrayList<>();
 
@@ -84,74 +150,18 @@ public enum Day9 implements Solver<Long, Integer> {
     private record Disk(List<FileBlock> fileBlocks, List<Integer> freeSpace, int size) {
     }
 
-    private static class MutableRange {
-        private int _start;
-        private int _end;
+    private record DiskRanges(List<File> files, List<MutableIntRange> freeSpace, int size) {
+    }
 
-        public MutableRange(int start, int end) {
-            if (_start > _end)
-                throw new IllegalArgumentException("Range end cannot be smaller than start");
-            this._start = start;
-            this._end = end;
+    private record File(int id, int startPos, int size) {
+        public File withPos(int newStartPos) {
+            return new File(id, newStartPos, size);
         }
 
-        public int size() {
-            return _start - _end + 1;
-        }
-
-        public int start() {
-            return this._start;
-        }
-
-        public int end() {
-            return this._end;
-        }
-
-        public void removeFromStart(int amount) {
-            if (amount > size()) {
-                throw new IllegalArgumentException(
-                        String.format("Cannot remove %s from range with size %s", amount, size()));
-            }
-            this._start += amount;
-        }
-
-        public void removeFromEnd(int amount) {
-            if (amount > size()) {
-                throw new IllegalArgumentException(
-                        String.format("Cannot remove %s from range with size %s", amount, size()));
-            }
-            this._end -= amount;
-
-        }
-
-        @Override
-        public String toString() {
-            return "Range [start=" + _start + ", end=" + _end + "]";
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + _start;
-            result = prime * result + _end;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            MutableRange other = (MutableRange) obj;
-            if (_start != other._start)
-                return false;
-            if (_end != other._end)
-                return false;
-            return true;
+        public long getFileChecksum() {
+            return LongStream.range((long) startPos, (long) (startPos + size))
+                    .map(pos -> pos * (long) id)
+                    .sum();
         }
     }
 

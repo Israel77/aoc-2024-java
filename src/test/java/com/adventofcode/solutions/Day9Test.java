@@ -13,14 +13,12 @@ public class Day9Test {
     @Test
     @DisplayName("Should solve the example given in part 1")
     void testSolverPart1() {
-        // input = "12345";
-        // assertEquals(60, solver.solvePart1(input));
         assertEquals(1928L, solver.solvePart1(input));
     }
 
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
-        // assertEquals(34, solver.solvePart2(input));
+        assertEquals(2858L, solver.solvePart2(input));
     }
 }
