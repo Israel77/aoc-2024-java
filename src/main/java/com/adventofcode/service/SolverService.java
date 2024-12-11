@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.adventofcode.solutions.Day1;
+import com.adventofcode.solutions.Day10;
 import com.adventofcode.solutions.Day2;
 import com.adventofcode.solutions.Day3;
 import com.adventofcode.solutions.Day4;
@@ -45,6 +46,7 @@ public class SolverService {
             case DAY_7 -> Day7.INSTANCE;
             case DAY_8 -> new Day8();
             case DAY_9 -> Day9.INSTANCE;
+            case DAY_10 -> Day10.INSTANCE;
             default -> throw new UnsupportedOperationException("Solution not implemented yet");
         };
     }
