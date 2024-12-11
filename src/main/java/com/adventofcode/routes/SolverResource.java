@@ -3,6 +3,7 @@ package com.adventofcode.routes;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -26,6 +27,7 @@ public class SolverResource {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
+    @Timeout(600_000)
     @RunOnVirtualThread
     public String solve(@RestPath int dayNumber, @RestPath int partNumber,
             @FormParam("input") FileUpload inputPart) throws FileNotFoundException {
