@@ -3,6 +3,7 @@ package com.adventofcode.solutions;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.adventofcode.util.Direction;
 import com.adventofcode.util.Pair;
 import com.adventofcode.util.Triple;
 
@@ -119,29 +120,4 @@ public class Day6 implements Solver<Integer, Integer> {
         }
     }
 
-    private enum Direction {
-        UP,
-        RIGHT,
-        DOWN,
-        LEFT;
-
-        Pair<Integer, Integer> asPair() {
-            return switch (this) {
-                case UP -> new Pair<>(0, -1);
-                case RIGHT -> new Pair<>(1, 0);
-                case DOWN -> new Pair<>(0, 1);
-                case LEFT -> new Pair<>(-1, 0);
-            };
-        }
-
-        Direction rotateClockwise() {
-            return switch (this) {
-                case UP -> RIGHT;
-                case RIGHT -> DOWN;
-                case DOWN -> LEFT;
-                case LEFT -> UP;
-            };
-
-        }
-    }
 }
