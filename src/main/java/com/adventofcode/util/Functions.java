@@ -1,7 +1,9 @@
 package com.adventofcode.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class Functions {
     private Functions() {
@@ -46,4 +48,16 @@ public final class Functions {
 
         return result;
     }
+
+    public static <T> void joinAll(Iterable<CompletableFuture<T>> futures) {
+        for (var future : futures) {
+            future.join();
+        }
+    }
+
+    public static <T> void joinAllAndClear(Collection<CompletableFuture<T>> futures) {
+        joinAll(futures);
+        futures.clear();
+    }
+
 }
