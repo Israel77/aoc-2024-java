@@ -25,19 +25,74 @@ public enum Day10 implements Solver<Integer, Integer> {
             }
         }
 
-        return trailheads.stream()
+        return trailheads.parallelStream()
                 .mapToInt(pos -> calculateScore(pos, heightMap, Optional.empty()))
                 .sum();
     }
 
     @Override
     public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+        HeightMap heightMap = parseInput(input);
+
+        List<Pair<Integer, Integer>> trailheads = new ArrayList<>();
+        List<Pair<Integer, Integer>> trailEnds = new ArrayList<>();
+        for (int y = 0; y < heightMap.numOfRows; y++) {
+            for (int x = 0; x < heightMap.numOfColumns; ++x) {
+                var pos = new Pair<>(x, y);
+                switch (heightMap.getHeight(pos)) {
+                    case 0:
+                        trailheads.add(pos);
+                        break;
+                    case 9:
+                        trailEnds.add(pos);
+                        break;
+                }
+            }
+        }
+
+        return trailheads.parallelStream()
+                .mapToInt(pos -> calculateRating(pos, trailEnds, heightMap))
+                .sum();
+    }
+
+    int calculateRating(Pair<Integer, Integer> position, List<Pair<Integer, Integer>> trailEnds, HeightMap heightMap) {
+
+        List<Pair<Integer, Integer>> currentPath = new ArrayList<>();
+        List<List<Pair<Integer, Integer>>> allPaths = new ArrayList<>();
+
+        traversePaths(position, trailEnds, heightMap,
+                currentPath,
+                allPaths);
+
+        return allPaths.size();
+
+    }
+
+    void traversePaths(Pair<Integer, Integer> position, List<Pair<Integer, Integer>> trailEnds, HeightMap heightMap,
+            List<Pair<Integer, Integer>> currentPath,
+            List<List<Pair<Integer, Integer>>> allPaths) {
+        currentPath.add(position);
+
+        if (trailEnds.contains(position)) {
+            allPaths.add(currentPath);
+        } else {
+            var height = heightMap.getHeight(position);
+
+            for (Direction direction : Direction.values()) {
+                var newPosition = new Pair<>(position.x() + direction.asPair().x(),
+                        position.y() + direction.asPair().y());
+                if (isInBounds(newPosition, heightMap)
+                        && heightMap.getHeight(newPosition) == height + 1) {
+                    traversePaths(newPosition, trailEnds, heightMap,
+                            currentPath, allPaths);
+                }
+            }
+        }
     }
 
     int calculateScore(Pair<Integer, Integer> position, HeightMap heightMap,
             Optional<Set<Pair<Integer, Integer>>> previouslyVisited) {
+
         Set<Pair<Integer, Integer>> visited = previouslyVisited.orElse(new HashSet<>());
 
         if (visited.contains(position)) {
