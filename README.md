@@ -2,9 +2,10 @@
 
 My implementation of the AoC 2024 solutions in Java. Advent of code is an advent calendar made out of programming puzzles. I'm not really a competitive programmer and my goal is just to have fun and explore some of the Java features while I do it. 
 
-This project uses Java 21 with no external dependencies for the algorithm implementations, but JUnit is used for the tests and Quarkus for the Rest API.
+This project uses Java 21 with no external dependencies for the actual algorithm implementations, but JUnit is used for the tests, Quarkus for the Rest API and Maven as a build system.
 
-If you want to learn more about AoC, please visit its website: <https://adventofcode.com/>
+If you want to learn more about AoC, please visit its website: <https://adventofcode.com/>.
+ 
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
 ## Currently implemented solutions
@@ -18,9 +19,10 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | 5   | ✅      | ✅    |
 | 6   | ✅      | ✅    |
 | 7   | ✅      | ✅    |
-| 8   | ❌      | ❌    |
-| 9   | ❌      | ❌    |
-| 11  | ➖      | ➖    |
+| 8   | ✅      | ✅    |
+| 9   | ✅      | ✅    |
+| 10  | ✅      | ✅    |
+| 11  | ✅      | ✅    |
 | 12  | ➖      | ➖    |
 | 13  | ➖      | ➖    |
 | 14  | ➖      | ➖    |
