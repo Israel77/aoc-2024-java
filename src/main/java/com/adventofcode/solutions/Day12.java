@@ -333,11 +333,12 @@ public enum Day12 implements Solver<Long, Integer> {
         }
     }
 
+    /**
+     * Assumes that the corner represents the top-left corner
+     * of the cell with the same coordinates
+     */
     record Corner(
-            Pair<Integer, Integer> upperLeft,
-            Pair<Integer, Integer> upperRight,
-            Pair<Integer, Integer> lowerLeft,
-            Pair<Integer, Integer> lowerRight) {
+            Pair<Integer, Integer> coordinates) {
         /**
          * A corner is a set of 4 cell-coordinates (the ones touching the corner)
          * 
@@ -345,41 +346,80 @@ public enum Day12 implements Solver<Long, Integer> {
          * @return
          */
         public static Set<Corner> getCorners(Pair<Integer, Integer> cellCoords) {
+            var diagonal = Pair.sum(Direction.DOWN.asPair(), Direction.RIGHT.asPair());
+
             Corner upperLeftCorner = new Corner(
-                    new Pair<>(cellCoords.x() - 1, cellCoords.y() - 1),
-                    new Pair<>(cellCoords.x(), cellCoords.y() - 1),
-                    new Pair<>(cellCoords.x() - 1, cellCoords.y()),
                     cellCoords);
             Corner upperRightCorner = new Corner(
-                    new Pair<>(cellCoords.x(), cellCoords.y() - 1),
-                    new Pair<>(cellCoords.x() + 1, cellCoords.y() - 1),
-                    cellCoords,
-                    new Pair<>(cellCoords.x() + 1, cellCoords.y()));
+                    Pair.sum(cellCoords, Direction.RIGHT.asPair()));
             Corner lowerLeftCorner = new Corner(
-                    new Pair<>(cellCoords.x() - 1, cellCoords.y()),
-                    cellCoords,
-                    new Pair<>(cellCoords.x() - 1, cellCoords.y() + 1),
-                    new Pair<>(cellCoords.x(), cellCoords.y() + 1));
+                    Pair.sum(cellCoords, Direction.DOWN.asPair()));
             Corner lowerRightCorner = new Corner(
-                    cellCoords,
-                    new Pair<>(cellCoords.x() + 1, cellCoords.y()),
-                    new Pair<>(cellCoords.x(), cellCoords.y() + 1),
-                    new Pair<>(cellCoords.x() + 1, cellCoords.y() + 1));
+                    Pair.sum(cellCoords, diagonal));
 
             return Set.of(upperLeftCorner, upperRightCorner, lowerLeftCorner, lowerRightCorner);
         }
 
         public static Corner move(Corner corner, Direction direction) {
-            Pair<Integer, Integer> newUpperLeft = new Pair<>(corner.upperLeft.x() + direction.asPair().x(),
-                    corner.upperLeft().y() + direction.asPair().y());
-            Pair<Integer, Integer> newUpperRight = new Pair<>(corner.upperRight.x() + direction.asPair().x(),
-                    corner.upperRight().y() + direction.asPair().y());
-            Pair<Integer, Integer> newLowerLeft = new Pair<>(corner.lowerLeft.x() + direction.asPair().x(),
-                    corner.lowerLeft().y() + direction.asPair().y());
-            Pair<Integer, Integer> newLowerRight = new Pair<>(corner.lowerRight.x() + direction.asPair().x(),
-                    corner.lowerRight().y() + direction.asPair().y());
+            return new Corner(Pair.sum(corner.coordinates(), direction.asPair()));
+        }
 
-            return new Corner(newUpperLeft, newUpperRight, newLowerLeft, newLowerRight);
+        /**
+         * Returns the coordinates of the cell that is on the upper-left
+         * diagonal, relative to this corner.
+         * Note that the return is in Cell coordinates, not
+         * Corner coordinates. (But in this case they coincide)
+         * 
+         * @return
+         */
+        public Pair<Integer, Integer> upperLeft() {
+            var offset = new Pair<>(-1, -1);
+            return Pair.sum(coordinates, offset);
+        }
+
+        /**
+         * Returns the oordinates of the cell that is on the upper-right
+         * diagonal, relative to this corner.
+         * Note that the return is in Cell coordinates, not
+         * Corner coordinates.
+         * The upper-right Cell coordinates have the same value as
+         * the Corner immediately upwards, since we take the
+         * top-left corner of a cell as a reference.
+         * 
+         * @return
+         */
+        public Pair<Integer, Integer> upperRight() {
+            return Pair.sum(coordinates, Direction.UP.asPair());
+        }
+
+        /**
+         * Returns the coordinates of the cell that is on the lower-left
+         * diagonal, relative to this corner.
+         * Note that the return is in Cell coordinates, not
+         * Corner coordinates.
+         * The lower-left Cell coordinates have the same value as
+         * the Corner immediately left to this, since we take the
+         * top-left corner of a cell as a reference.
+         * 
+         * @return
+         */
+        public Pair<Integer, Integer> lowerLeft() {
+            return Pair.sum(coordinates, Direction.LEFT.asPair());
+        }
+
+        /**
+         * Returns the coordinates of the cell that is on the lower-right
+         * diagonal, relative to this corner.
+         * Note that the return is in Cell coordinates, not
+         * Corner coordinates.
+         * The lower-right Cell coordinates have the same value as
+         * this Corner coordinates, since we take the top-left
+         * corner of a cell as a reference.
+         * 
+         * @return
+         */
+        public Pair<Integer, Integer> lowerRight() {
+            return this.coordinates();
         }
     }
 }
