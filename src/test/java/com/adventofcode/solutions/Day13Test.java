@@ -2,6 +2,8 @@ package com.adventofcode.solutions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigInteger;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +37,6 @@ public class Day13Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
-        assertEquals(480, solver.solvePart2(input));
+        assertEquals(BigInteger.valueOf(875318608908l), solver.solvePart2(input));
     }
 }
