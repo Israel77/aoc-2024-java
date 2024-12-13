@@ -14,7 +14,7 @@ public enum Day1 implements Solver<Integer, Integer> {
     @Override
     public Integer solvePart1(String input) {
         return parseLocations(input)
-                .flatMap(pair -> {
+                .map(pair -> {
                     // Sorts the left and right columns
                     var left = pair.first().stream()
                             .sorted()
