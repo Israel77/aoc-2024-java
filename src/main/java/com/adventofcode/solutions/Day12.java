@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.adventofcode.util.Direction;
 import com.adventofcode.util.Pair;
@@ -16,15 +17,24 @@ public enum Day12 implements Solver<Long, Integer> {
 
     @Override
     public Long solvePart1(String input) {
-        return parseInput(input).regions().stream()
+        return parseInput(input).regions()
+                .parallel()
                 .mapToLong(Region::price)
                 .sum();
     }
 
     @Override
     public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+        // parseInput(input).regions()
+        // .forEach(region -> {
+        // System.out.println("Region: " + region.cells.get(0).id());
+        // System.out.println("Number of sides: " + region.sides());
+        // });
+        return parseInput(input).regions()
+                // .parallel()
+                .mapToInt(Region::discountedPrice)
+                .sum();
+
     }
 
     Grid parseInput(String input) {
@@ -56,7 +66,7 @@ public enum Day12 implements Solver<Long, Integer> {
         // Same as cells, but implemented as a Map to make look-up
         // easier and more efficient.
         final Map<Pair<Integer, Integer>, Character> cellMap;
-        List<Region> _regions;
+        Stream<Region> _regions;
         // Marks whether a cell already belongs to a region.
         Set<Cell> visited = new HashSet<>();
 
@@ -75,7 +85,7 @@ public enum Day12 implements Solver<Long, Integer> {
         }
 
         private void initRegions() {
-            List<Region> regions = new ArrayList<>();
+            Stream.Builder<Region> regionBuilder = Stream.builder();
 
             for (Cell cell : cells()) {
                 if (visited.contains(cell)) {
@@ -83,17 +93,17 @@ public enum Day12 implements Solver<Long, Integer> {
                 }
 
                 List<Cell> path = traverseRegion(cell);
-                regions.add(new Region(path));
+                regionBuilder.add(new Region(path));
             }
 
-            this._regions = regions;
+            this._regions = regionBuilder.build();
         }
 
         private List<Cell> traverseRegion(Cell initialCell) {
 
             final char id = initialCell.id();
 
-            final List<Cell> path = new ArrayList<>();
+            final var path = new ArrayList<Cell>();
             if (visited.contains(initialCell)) {
                 return path;
             }
@@ -106,7 +116,7 @@ public enum Day12 implements Solver<Long, Integer> {
 
                 if (isInBounds(newPosition) && cellMap.get(newPosition) == id) {
                     var nextCell = new Cell(id, newPosition);
-                    path.addAll(traverseRegion(nextCell));
+                    traverseRegion(nextCell).forEach(cell -> path.add(cell));
                 }
             }
             return path;
@@ -124,7 +134,7 @@ public enum Day12 implements Solver<Long, Integer> {
             return this._numOfColumns;
         }
 
-        public List<Region> regions() {
+        public Stream<Region> regions() {
             return this._regions;
         }
 
@@ -141,17 +151,165 @@ public enum Day12 implements Solver<Long, Integer> {
             return (long) area() * (long) perimeter();
         }
 
+        public int discountedPrice() {
+            return area() * sides();
+        }
+
         public int area() {
             return cells().size();
         }
 
         public int perimeter() {
-            // An edge is the boundary between two cells.
-            // Since the order of the cells does not matter
-            // this can be represented as a set containing
-            // the positions of the two cells.
-            // Since we don't want to count duplicate edges,
-            // they are put within another set.
+            return edges().size();
+        }
+
+        public int sides() {
+
+            int turns = 0;
+
+            var corners = corners();
+            Set<Corner> visitedCorners = new HashSet<>();
+
+            Corner startingCorner = pickTrueCorner(corners);
+
+            turns += countTurns(startingCorner, corners, visitedCorners);
+
+            List<Corner> unvisitedCorners = new ArrayList<>(corners);
+            unvisitedCorners.removeAll(visitedCorners);
+
+            while (!unvisitedCorners.isEmpty()) {
+                startingCorner = unvisitedCorners.removeFirst();
+
+                if (!visitedCorners.contains(startingCorner)
+                        && isValidStart(startingCorner, corners))
+                    turns += countTurns(startingCorner, corners, visitedCorners);
+            }
+
+            return turns;
+        }
+
+        private Corner pickTrueCorner(Set<Corner> corners) {
+            // Only start from true corners, i. e. there are
+            // two valid possible continuations.
+            var cornerIterator = corners.iterator();
+            Corner startingCorner;
+            boolean validStart = false;
+            do {
+                startingCorner = cornerIterator.next();
+                validStart = isValidStart(startingCorner, corners);
+            } while (!validStart);
+
+            return startingCorner;
+        }
+
+        private boolean isValidStart(Corner startingCorner, Set<Corner> corners) {
+            List<Direction> validContinuations = new ArrayList<>();
+
+            for (Direction direction : Direction.values()) {
+
+                var nextCorner = Corner.move(startingCorner, direction);
+
+                boolean isValidCorner = corners.contains(nextCorner);
+
+                if (isValidCorner && isValidEdge(startingCorner, direction)) {
+                    validContinuations.add(direction);
+                }
+            }
+            return validContinuations.size() == 2
+                    && validContinuations.get(0).isPerpendicular(validContinuations.get(1));
+        }
+
+        private int countTurns(Corner startingCorner, Set<Corner> corners,
+                Set<Corner> visitedCorners) {
+            int turns = 0;
+
+            Corner currentCorner = startingCorner;
+            Direction previousDirection = null;
+            boolean canAdvance;
+            do {
+                canAdvance = false;
+                int directionsTried = 0;
+
+                Direction direction = previousDirection != null
+                        // Prioritize keep traversing in the same direction.
+                        ? previousDirection
+                        // Arbitrary initial direction
+                        : Direction.UP;
+                while (directionsTried < Direction.values().length) {
+                    var nextCorner = Corner.move(currentCorner, direction);
+
+                    boolean isValidCorner = corners.contains(nextCorner);
+                    boolean wasVisited = visitedCorners.contains(nextCorner);
+                    boolean isNewDirection = previousDirection != direction;
+                    boolean isPerpendicular = previousDirection == null || previousDirection.isPerpendicular(direction);
+
+                    if ((!isNewDirection || isPerpendicular)
+                            && isValidCorner
+                            && isValidEdge(currentCorner, direction)
+                            && !wasVisited) {
+                        canAdvance = true;
+                        if (isNewDirection)
+                            turns++;
+
+                        previousDirection = direction;
+                        currentCorner = nextCorner;
+                        visitedCorners.add(currentCorner);
+                        break;
+                    }
+                    direction = direction.rotateClockwise();
+                    directionsTried++;
+                }
+
+            } while (canAdvance);
+
+            return turns;
+        }
+
+        // Check if there is an edge linked to the corner in the
+        // given direction
+        boolean isValidEdge(Corner from, Direction direction) {
+            return switch (direction) {
+                case UP -> edges().contains(Set.of(
+                        from.upperLeft(),
+                        from.upperRight()));
+                case RIGHT -> edges().contains(Set.of(
+                        from.lowerRight(),
+                        from.upperRight()));
+                case DOWN -> edges().contains(Set.of(
+                        from.lowerRight(),
+                        from.lowerLeft()));
+                case LEFT -> edges().contains(Set.of(
+                        from.lowerLeft(),
+                        from.upperLeft()));
+            };
+        }
+
+        Set<Corner> corners() {
+            return cells().stream()
+                    .map(Cell::position)
+                    .map(Corner::getCorners)
+                    .reduce((Set<Corner>) new HashSet<Corner>(), (x, y) -> {
+                        x.addAll(y);
+                        return x;
+                    }, (x, y) -> {
+                        Set<Corner> combined = new HashSet<>(x);
+                        combined.addAll(y);
+                        return combined;
+                    });
+        }
+
+        /**
+         * 
+         * An edge is the boundary between two cells.
+         * Since the order of the cells does not matter
+         * this can be represented as a set containing
+         * the positions of the two cells.
+         * Since we don't want to count duplicate edges,
+         * they are put within another set.
+         * 
+         * @return
+         */
+        Set<Set<Pair<Integer, Integer>>> edges() {
             Set<Set<Pair<Integer, Integer>>> edges = new HashSet<>();
 
             var cellCoordinateSet = cells.stream()
@@ -171,7 +329,57 @@ public enum Day12 implements Solver<Long, Integer> {
                 }
             }
 
-            return edges.size();
+            return edges;
+        }
+    }
+
+    record Corner(
+            Pair<Integer, Integer> upperLeft,
+            Pair<Integer, Integer> upperRight,
+            Pair<Integer, Integer> lowerLeft,
+            Pair<Integer, Integer> lowerRight) {
+        /**
+         * A corner is a set of 4 cell-coordinates (the ones touching the corner)
+         * 
+         * @param cellCoords
+         * @return
+         */
+        public static Set<Corner> getCorners(Pair<Integer, Integer> cellCoords) {
+            Corner upperLeftCorner = new Corner(
+                    new Pair<>(cellCoords.x() - 1, cellCoords.y() - 1),
+                    new Pair<>(cellCoords.x(), cellCoords.y() - 1),
+                    new Pair<>(cellCoords.x() - 1, cellCoords.y()),
+                    cellCoords);
+            Corner upperRightCorner = new Corner(
+                    new Pair<>(cellCoords.x(), cellCoords.y() - 1),
+                    new Pair<>(cellCoords.x() + 1, cellCoords.y() - 1),
+                    cellCoords,
+                    new Pair<>(cellCoords.x() + 1, cellCoords.y()));
+            Corner lowerLeftCorner = new Corner(
+                    new Pair<>(cellCoords.x() - 1, cellCoords.y()),
+                    cellCoords,
+                    new Pair<>(cellCoords.x() - 1, cellCoords.y() + 1),
+                    new Pair<>(cellCoords.x(), cellCoords.y() + 1));
+            Corner lowerRightCorner = new Corner(
+                    cellCoords,
+                    new Pair<>(cellCoords.x() + 1, cellCoords.y()),
+                    new Pair<>(cellCoords.x(), cellCoords.y() + 1),
+                    new Pair<>(cellCoords.x() + 1, cellCoords.y() + 1));
+
+            return Set.of(upperLeftCorner, upperRightCorner, lowerLeftCorner, lowerRightCorner);
+        }
+
+        public static Corner move(Corner corner, Direction direction) {
+            Pair<Integer, Integer> newUpperLeft = new Pair<>(corner.upperLeft.x() + direction.asPair().x(),
+                    corner.upperLeft().y() + direction.asPair().y());
+            Pair<Integer, Integer> newUpperRight = new Pair<>(corner.upperRight.x() + direction.asPair().x(),
+                    corner.upperRight().y() + direction.asPair().y());
+            Pair<Integer, Integer> newLowerLeft = new Pair<>(corner.lowerLeft.x() + direction.asPair().x(),
+                    corner.lowerLeft().y() + direction.asPair().y());
+            Pair<Integer, Integer> newLowerRight = new Pair<>(corner.lowerRight.x() + direction.asPair().x(),
+                    corner.lowerRight().y() + direction.asPair().y());
+
+            return new Corner(newUpperLeft, newUpperRight, newLowerLeft, newLowerRight);
         }
     }
 }
