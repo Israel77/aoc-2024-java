@@ -1,6 +1,7 @@
 package com.adventofcode.solutions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,13 +26,8 @@ public enum Day12 implements Solver<Long, Integer> {
 
     @Override
     public Integer solvePart2(String input) {
-        // parseInput(input).regions()
-        // .forEach(region -> {
-        // System.out.println("Region: " + region.cells.get(0).id());
-        // System.out.println("Number of sides: " + region.sides());
-        // });
         return parseInput(input).regions()
-                // .parallel()
+                .parallel()
                 .mapToInt(Region::discountedPrice)
                 .sum();
 
@@ -168,21 +164,22 @@ public enum Day12 implements Solver<Long, Integer> {
             int turns = 0;
 
             var corners = corners();
-            Set<Corner> visitedCorners = new HashSet<>();
+            Map<Corner, Integer> remainingVisits = numberOfPasses(corners);
 
             Corner startingCorner = pickTrueCorner(corners);
 
-            turns += countTurns(startingCorner, corners, visitedCorners);
+            turns += countTurns(startingCorner, corners, remainingVisits);
 
-            List<Corner> unvisitedCorners = new ArrayList<>(corners);
-            unvisitedCorners.removeAll(visitedCorners);
+            List<Corner> unvisitedCorners = new ArrayList<>(corners.stream()
+                    .filter(corner -> remainingVisits.getOrDefault(corner, 0) > 0)
+                    .toList());
 
             while (!unvisitedCorners.isEmpty()) {
                 startingCorner = unvisitedCorners.removeFirst();
 
-                if (!visitedCorners.contains(startingCorner)
+                if (remainingVisits.getOrDefault(startingCorner, 0) > 0
                         && isValidStart(startingCorner, corners))
-                    turns += countTurns(startingCorner, corners, visitedCorners);
+                    turns += countTurns(startingCorner, corners, remainingVisits);
             }
 
             return turns;
@@ -200,6 +197,32 @@ public enum Day12 implements Solver<Long, Integer> {
             } while (!validStart);
 
             return startingCorner;
+        }
+
+        private Map<Corner, Integer> numberOfPasses(Collection<Corner> corners) {
+
+            Map<Corner, Integer> countPasses = new HashMap<>();
+
+            for (Corner corner : corners) {
+
+                List<Direction> validContinuations = new ArrayList<>();
+
+                for (Direction direction : Direction.values()) {
+
+                    var nextCorner = Corner.move(corner, direction);
+
+                    boolean isValidCorner = corners.contains(nextCorner);
+
+                    if (isValidCorner && isValidEdge(corner, direction)) {
+                        validContinuations.add(direction);
+                    }
+                }
+
+                // Should pass once for every two possible continuations
+                countPasses.put(corner, validContinuations.size() / 2);
+            }
+            return countPasses;
+
         }
 
         private boolean isValidStart(Corner startingCorner, Set<Corner> corners) {
@@ -220,7 +243,7 @@ public enum Day12 implements Solver<Long, Integer> {
         }
 
         private int countTurns(Corner startingCorner, Set<Corner> corners,
-                Set<Corner> visitedCorners) {
+                Map<Corner, Integer> remainingVisits) {
             int turns = 0;
 
             Corner currentCorner = startingCorner;
@@ -231,29 +254,30 @@ public enum Day12 implements Solver<Long, Integer> {
                 int directionsTried = 0;
 
                 Direction direction = previousDirection != null
-                        // Prioritize keep traversing in the same direction.
-                        ? previousDirection
+                        // Prioritize clockwise rotation.
+                        ? previousDirection.rotateClockwise()
                         // Arbitrary initial direction
                         : Direction.UP;
                 while (directionsTried < Direction.values().length) {
                     var nextCorner = Corner.move(currentCorner, direction);
 
                     boolean isValidCorner = corners.contains(nextCorner);
-                    boolean wasVisited = visitedCorners.contains(nextCorner);
+                    boolean canVisit = remainingVisits.getOrDefault(nextCorner, 0) > 0;
                     boolean isNewDirection = previousDirection != direction;
                     boolean isPerpendicular = previousDirection == null || previousDirection.isPerpendicular(direction);
 
                     if ((!isNewDirection || isPerpendicular)
                             && isValidCorner
                             && isValidEdge(currentCorner, direction)
-                            && !wasVisited) {
+                            && canVisit) {
                         canAdvance = true;
                         if (isNewDirection)
                             turns++;
 
                         previousDirection = direction;
                         currentCorner = nextCorner;
-                        visitedCorners.add(currentCorner);
+                        remainingVisits.put(currentCorner,
+                                remainingVisits.get(currentCorner) - 1);
                         break;
                     }
                     direction = direction.rotateClockwise();
