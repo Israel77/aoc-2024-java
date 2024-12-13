@@ -20,7 +20,7 @@ public record Pair<F, S>(F first, S second) {
         return mapper.apply(first, second);
     }
 
-    public <A, B> Pair<A, B> flatMap(Function<Pair<? super F, ? super S>, Pair<A, B>> mapper) {
+    public <A, B> Pair<A, B> flatMap(Function<Pair<F, S>, Pair<A, B>> mapper) {
         return mapper.apply(this);
     }
 

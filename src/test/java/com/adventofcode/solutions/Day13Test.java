@@ -35,5 +35,6 @@ public class Day13Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
+        assertEquals(480, solver.solvePart2(input));
     }
 }
