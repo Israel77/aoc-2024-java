@@ -1,21 +1,60 @@
 package com.adventofcode.solutions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.adventofcode.util.Pair;
 
-public class Day14 implements Solver<Integer, Object> {
+public class Day14 implements Solver<Integer, String> {
 
-    private Pair<Integer, Integer> availableSpace;
+    private final Pair<Integer, Integer> availableSpace;
+    private final int iterationStart;
+    private final int iterationEnd;
+    private final boolean visualize;
 
-    public Day14(Pair<Integer, Integer> availableSpace) {
+    /**
+     * Solution for Day 14 depends on available space, which is a pair
+     * representing the number of columns and rows of the space where
+     * the robots can move.
+     * 
+     * iterationStart and iterationEnd control the pagination for part 2
+     * where the number of iterations can get very high, and recomputing
+     * again would be inefficient, so the last iteration in a page is cached.
+     * 
+     * For example, you can start with iterationStart=0 and iterationEnd=2000,
+     * this will try to find the answer within the first 2000 iterations. If
+     * no result is found, you can do iterationStart=2000 (cached from last try)
+     * and iterationEnd=4000 to search within the next 2000 iterations and so on.
+     * 
+     * You can run as many iterations per request as you want (and your hardware
+     * supports), but keep in mind that only the last one is cached. So if you try
+     * iterationStart=2000 and iterationEnd=4000, followed by iterationStart=3500
+     * and iterationEnd=5000, this would be as inefficient as running with
+     * iterationStart=0/iterationEnd=5000, since the 3500th iteration was not
+     * cached. This means you should prefer using iterationEnd of each request
+     * as iterationStart for the next.
+     * 
+     * You can also try to find the easter egg manually by passing visualize=true.
+     * This will print the robots position on each iteration.
+     * 
+     * @param availableSpace
+     * @param iterationStart
+     * @param iterationEnd
+     * @param visualize
+     */
+    public Day14(Pair<Integer, Integer> availableSpace, int iterationStart, int iterationEnd, boolean visualize) {
         this.availableSpace = availableSpace;
+        this.iterationStart = iterationStart;
+        this.iterationEnd = iterationEnd;
+        this.visualize = visualize;
     }
 
     @Override
@@ -27,11 +66,10 @@ public class Day14 implements Solver<Integer, Object> {
                     var position = robot.position;
 
                     for (int i = 0; i < 100; ++i)
-                        position = iterator.next();
+                        position = iterator.next().position;
 
                     return position;
                 })
-                .sorted((a, b) -> Integer.compare(a.second(), b.second()))
                 .collect(Collectors.groupingBy(position -> getQuadrant(position,
                         availableSpace)))
                 .entrySet().stream()
@@ -42,16 +80,79 @@ public class Day14 implements Solver<Integer, Object> {
     }
 
     @Override
-    public Object solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+    public String solvePart2(String input) {
+
+        var initialRobots = Day14Cache.INSTANCE.get().computeIfAbsent(iterationStart, key -> {
+            List<Robot> result = parseInput(input);
+            var iterators = result.stream()
+                    .map(robot -> new RobotIterator(robot, availableSpace))
+                    .toList();
+            for (int i = 0; i < iterationStart; ++i) {
+                result = iterators.stream().map(it -> it.next()).toList();
+            }
+            return result;
+        });
+        var iterators = initialRobots.stream()
+                .map(robot -> new RobotIterator(robot, availableSpace))
+                .toList();
+
+        StringBuilder sb = new StringBuilder();
+
+        List<Robot> robots = new ArrayList<>();
+        for (int i = iterationStart; i < iterationEnd; ++i) {
+            robots = iterators.stream()
+                    .map(it -> it.next())
+                    .toList();
+            var positions = robots.stream()
+                    .map(robot -> robot.position())
+                    .toList();
+
+            if (visualize) {
+                sb.append("Iteration: " + i + 1);
+                sb.append('\n');
+                sb.append(printRobotsNoCount(positions, availableSpace));
+                sb.append('\n');
+            } else if (findStreak(positions)) {
+                sb.append(i + 1);
+                break;
+            }
+            ;
+        }
+
+        Day14Cache.INSTANCE.get().put(iterationEnd, robots);
+
+        return sb.toString();
     }
 
-    public void configureSpace(Pair<Integer, Integer> availableSpace) {
-        this.availableSpace = availableSpace;
+    boolean findStreak(List<Pair<Integer, Integer>> positions) {
+        Map<Integer, Set<Integer>> ys = new HashMap<>();
+
+        for (var position : positions) {
+            var xs = ys.getOrDefault(position.y(), new HashSet<>());
+            xs.add(position.x());
+            ys.put(position.y(), xs);
+        }
+
+        for (var xs : ys.values()) {
+            List<Integer> xsList = new ArrayList<>();
+            xs.forEach(xsList::add);
+            xsList.sort(Integer::compare);
+
+            int lastValue = 0;
+            int streakCount = 0;
+            for (int value : xsList) {
+                if (value - lastValue == 1)
+                    streakCount++;
+                lastValue = value;
+
+                if (streakCount >= 30)
+                    return true;
+            }
+        }
+        return false;
     }
 
-    private void printRobots(List<Pair<Integer, Integer>> positions, Pair<Integer, Integer> availableSpace) {
+    private String printRobots(List<Pair<Integer, Integer>> positions, Pair<Integer, Integer> availableSpace) {
         Map<Pair<Integer, Integer>, Integer> counter = new HashMap<>();
 
         for (var position : positions) {
@@ -69,7 +170,23 @@ public class Day14 implements Solver<Integer, Object> {
             line.append('\n');
             result.append(line);
         }
-        System.out.println(result.toString());
+        return result.toString();
+    }
+
+    private String printRobotsNoCount(List<Pair<Integer, Integer>> positions, Pair<Integer, Integer> availableSpace) {
+        Set<Pair<Integer, Integer>> positionSet = positions.stream().collect(Collectors.toSet());
+
+        StringBuilder result = new StringBuilder();
+        for (int y = 0; y < availableSpace.y(); ++y) {
+            StringBuilder line = new StringBuilder();
+            for (int x = 0; x < availableSpace.x(); ++x) {
+                var position = new Pair<>(x, y);
+                line.append(positionSet.contains(position) ? '#' : '.');
+            }
+            line.append('\n');
+            result.append(line);
+        }
+        return result.toString();
     }
 
     private int getQuadrant(Pair<Integer, Integer> position, Pair<Integer, Integer> availableSpace) {
@@ -111,11 +228,12 @@ public class Day14 implements Solver<Integer, Object> {
     record Robot(Pair<Integer, Integer> position, Pair<Integer, Integer> velocity) {
     }
 
-    class RobotIterator implements Iterator<Pair<Integer, Integer>> {
+    class RobotIterator implements Iterator<Robot> {
         int currentX;
         int currentY;
         int velocityX;
         int velocityY;
+        final Pair<Integer, Integer> velocity;
         int maxX;
         int maxY;
 
@@ -124,6 +242,7 @@ public class Day14 implements Solver<Integer, Object> {
             this.currentY = robot.position.y();
             this.velocityX = robot.velocity.x();
             this.velocityY = robot.velocity.y();
+            this.velocity = robot.velocity;
             this.maxX = availableSpace.x();
             this.maxY = availableSpace.y();
         }
@@ -134,11 +253,15 @@ public class Day14 implements Solver<Integer, Object> {
         }
 
         @Override
-        public Pair<Integer, Integer> next() {
+        public Robot next() {
             currentX = (currentX + velocityX + maxX) % maxX;
             currentY = (currentY + +velocityY + maxY) % maxY;
 
-            return new Pair<>(currentX, currentY);
+            return new Robot(new Pair<>(currentX, currentY), velocity);
+        }
+
+        public Robot current() {
+            return new Robot(new Pair<>(currentX, currentY), velocity);
         }
     }
 }

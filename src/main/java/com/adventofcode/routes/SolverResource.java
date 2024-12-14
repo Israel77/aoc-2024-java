@@ -1,19 +1,14 @@
 package com.adventofcode.routes;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 import org.eclipse.microprofile.faulttolerance.Timeout;
-import org.jboss.resteasy.reactive.RestPath;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import com.adventofcode.service.SolverService;
-import com.adventofcode.util.Constants.Day;
-import com.adventofcode.util.Constants.Part;
 
 import io.smallrye.common.annotation.RunOnVirtualThread;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -29,11 +24,9 @@ public class SolverResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Timeout(600_000)
     @RunOnVirtualThread
-    public String solve(@RestPath int dayNumber, @RestPath int partNumber,
-            @FormParam("input") FileUpload inputPart) throws FileNotFoundException {
+    public String solve(@BeanParam RequestBean request) throws FileNotFoundException {
 
-        solverService = new SolverService(Day.fromInteger(dayNumber), Part.fromInteger(partNumber),
-                new FileInputStream(inputPart.uploadedFile().toFile()));
+        solverService = new SolverService(request);
 
         return solverService.solve();
     }

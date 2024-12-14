@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.adventofcode.util.Pair;
 
 public class Day14Test {
-    Day14 solver = new Day14(new Pair<>(11, 7));
+    Day14 solver = new Day14(new Pair<>(11, 7), 0, 100, false);
 
     String input = """
             p=0,4 v=3,-3
@@ -34,5 +34,6 @@ public class Day14Test {
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
+        // Code almost untestable, just test manually if you touch the solution
     }
 }

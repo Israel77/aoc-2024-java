@@ -1,6 +1,8 @@
 package com.adventofcode.service;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +11,7 @@ import java.text.NumberFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.adventofcode.routes.RequestBean;
 import com.adventofcode.solutions.Day1;
 import com.adventofcode.solutions.Day10;
 import com.adventofcode.solutions.Day11;
@@ -36,11 +39,12 @@ public class SolverService {
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public SolverService(Day day, Part part, InputStream inputStream) {
-        readInputFromInputStream(inputStream);
+    public SolverService(RequestBean request) throws FileNotFoundException {
+        readInputFromInputStream(
+                new FileInputStream(request.getInputPart().uploadedFile().toFile()));
 
-        this.day = day;
-        this.part = part;
+        this.day = Day.fromInteger(request.getDayNumber());
+        this.part = Part.fromInteger(request.getPartNumber());
         this.solverImpl = switch (day) {
             case DAY_1 -> Day1.INSTANCE;
             case DAY_2 -> Day2.INSTANCE;
@@ -55,7 +59,10 @@ public class SolverService {
             case DAY_11 -> Day11.INSTANCE;
             case DAY_12 -> Day12.INSTANCE;
             case DAY_13 -> Day13.INSTANCE;
-            case DAY_14 -> new Day14(new Pair<>(101, 103));
+            case DAY_14 -> new Day14(new Pair<>(101, 103),
+                    request.getDay14IterationStart().orElse(0),
+                    request.getDay14IterationEnd().orElse(1500),
+                    false || request.getDay14Visualize());
             default -> throw new UnsupportedOperationException("Solution not implemented yet");
         };
     }
