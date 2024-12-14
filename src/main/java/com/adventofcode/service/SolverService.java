@@ -14,6 +14,7 @@ import com.adventofcode.solutions.Day10;
 import com.adventofcode.solutions.Day11;
 import com.adventofcode.solutions.Day12;
 import com.adventofcode.solutions.Day13;
+import com.adventofcode.solutions.Day14;
 import com.adventofcode.solutions.Day2;
 import com.adventofcode.solutions.Day3;
 import com.adventofcode.solutions.Day4;
@@ -23,6 +24,7 @@ import com.adventofcode.solutions.Day7;
 import com.adventofcode.solutions.Day8;
 import com.adventofcode.solutions.Day9;
 import com.adventofcode.solutions.Solver;
+import com.adventofcode.util.Pair;
 import com.adventofcode.util.Constants.Day;
 import com.adventofcode.util.Constants.Part;
 
@@ -53,6 +55,7 @@ public class SolverService {
             case DAY_11 -> Day11.INSTANCE;
             case DAY_12 -> Day12.INSTANCE;
             case DAY_13 -> Day13.INSTANCE;
+            case DAY_14 -> new Day14(new Pair<>(101, 103));
             default -> throw new UnsupportedOperationException("Solution not implemented yet");
         };
     }

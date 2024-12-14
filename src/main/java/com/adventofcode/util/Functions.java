@@ -60,4 +60,8 @@ public final class Functions {
         futures.clear();
     }
 
+    public static <T> T println(T element) {
+        System.out.println(element);
+        return element;
+    }
 }
