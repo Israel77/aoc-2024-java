@@ -49,19 +49,39 @@ public final class Functions {
         return result;
     }
 
+    /**
+     * Wait for all futures to complete
+     * 
+     * @param <T>     Type of the futures.
+     * @param futures Collection of futures.
+     */
     public static <T> void joinAll(Iterable<CompletableFuture<T>> futures) {
         for (var future : futures) {
             future.join();
         }
     }
 
+    /**
+     * Wait for all futures to complete and clear the collection afterwards.
+     * 
+     * @param <T>     Type of the futures.
+     * @param futures Collection of futures.
+     */
     public static <T> void joinAllAndClear(Collection<CompletableFuture<T>> futures) {
         joinAll(futures);
         futures.clear();
     }
 
-    public static <T> T println(T element) {
-        System.out.println(element);
-        return element;
+    /**
+     * Prints an object and returns itself. Useful for debugging streams
+     * by passing this function to map.
+     * 
+     * @param <T>    Type of the object.
+     * @param object Object to be printed.
+     * @return Same object passed as input
+     */
+    public static <T> T println(T object) {
+        System.out.println(object);
+        return object;
     }
 }

@@ -2,6 +2,10 @@ package com.adventofcode.util;
 
 import java.util.Iterator;
 
+/**
+ * Represents a range of integers from start (inclusive) until
+ * end (exclusive). This range can be efficiently mutated.
+ */
 public class MutableIntRange implements Iterable<Integer> {
     private int _start;
     private int _end;

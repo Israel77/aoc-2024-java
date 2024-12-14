@@ -5,6 +5,9 @@ public final class Constants {
         // Utility class
     }
 
+    /**
+     * Represents each valid AoC day.
+     */
     public static enum Day {
         DAY_1, DAY_2, DAY_3, DAY_4, DAY_5, //
         DAY_6, DAY_7, DAY_8, DAY_9, DAY_10, //
@@ -49,6 +52,9 @@ public final class Constants {
         }
     }
 
+    /**
+     * Represents each part of the puzzles
+     */
     public static enum Part {
         PART_1, PART_2;
 

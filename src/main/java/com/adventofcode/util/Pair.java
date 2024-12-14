@@ -5,6 +5,11 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Represents a generic pair of items, possibly of different types.
+ * 
+ * Can be useful to represent 2D coordinates.
+ */
 public record Pair<F, S>(F first, S second) {
     public <T> T mapFirst(Function<? super F, ? extends T> mapper) {
         return mapper.apply(first);

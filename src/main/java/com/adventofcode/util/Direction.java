@@ -1,11 +1,25 @@
 package com.adventofcode.util;
 
+/**
+ * Represents a direction in 2D coordinates
+ */
 public enum Direction {
     UP,
     RIGHT,
     DOWN,
     LEFT;
 
+    /**
+     * Returns a pair representing the unit 2d vector
+     * associated with this direction.
+     * Pair.first is the x coordinate.
+     * Pair.second is the y coordinate.
+     * 
+     * x is positive towards right.
+     * y is positive towards down.
+     * 
+     * @return Unit vector representing the direction
+     */
     public Pair<Integer, Integer> asPair() {
         return switch (this) {
             case UP -> new Pair<>(0, -1);
