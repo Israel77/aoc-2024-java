@@ -2,13 +2,8 @@ package com.adventofcode.solutions;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.adventofcode.util.Matrix2x2;
@@ -22,10 +17,10 @@ public enum Day13 implements Solver<Integer, BigInteger> {
     public Integer solvePart1(String input) {
         return parseInput(input).stream()
                 .parallel()
-                .map(Machine::minTokens)
+                .map(Machine::findSolution)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .mapToInt(state -> state.cost())
+                .mapToInt(pair -> 3 * pair.first() + pair.second())
                 .sum();
     }
 
@@ -33,7 +28,7 @@ public enum Day13 implements Solver<Integer, BigInteger> {
     public BigInteger solvePart2(String input) {
         return parseInputWithOffset(input).stream()
                 .parallel()
-                .map(LongMachine::linearSolve)
+                .map(LongMachine::findSolution)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(pair -> pair.first().multiply(BigInteger.valueOf(3)).add(pair.second()))
@@ -122,7 +117,7 @@ public enum Day13 implements Solver<Integer, BigInteger> {
     record LongMachine(Pair<Long, Long> buttonA,
             Pair<Long, Long> buttonB,
             Pair<Long, Long> prize) {
-        public Optional<Pair<BigInteger, BigInteger>> linearSolve() {
+        public Optional<Pair<BigInteger, BigInteger>> findSolution() {
             var coefficients = Matrix2x2.ofColumns(buttonA, buttonB);
             var solution = coefficients.solveLinearSystem(prize);
 
@@ -165,84 +160,34 @@ public enum Day13 implements Solver<Integer, BigInteger> {
 
         private static final int MAX_PRESSES = 100;
 
-        public Optional<IterationState> minTokens() {
-            final var initialState = new IterationState(0, 0, new Pair<>(0, 0));
+        public Optional<Pair<Integer, Integer>> findSolution() {
+            var coefficients = Matrix2x2.ofColumns(Pair.intToLong(buttonA), Pair.intToLong(buttonB));
+            var maybeSolution = coefficients
+                    .solveLinearSystem(Pair.intToLong(prize))
+                    .map(Pair::longToInt)
+                    .map(Optional::get);
 
-            Set<Optional<IterationState>> states = new HashSet<>();
-            states.add(Optional.of(initialState));
-
-            Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressA = new HashMap<>();
-            Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressB = new HashMap<>();
-
-            boolean advance = true;
-            do {
-                int previousNumberOfStates = states.size();
-                states = iterate(states, memoPressA, memoPressB);
-                // Keep iterating until no new states are generated
-                advance = previousNumberOfStates != states.size();
-            } while (advance);
-
-            return states.stream()
-                    // .parallel()
-                    .filter(state -> state.isPresent() && state.get().position().equals(prize))
-                    .map(Optional::get)
-                    .findFirst();
-        }
-
-        public Set<Optional<IterationState>> iterate(Collection<Optional<IterationState>> states,
-                Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressA,
-                Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressB) {
-            // Represents the number of A presses, B presses and the associated cost
-            Set<Optional<IterationState>> outcomes = new HashSet<>(states);
-
-            for (var possibleState : states) {
-                possibleState.ifPresent(state -> {
-                    outcomes.add(pressA(state, prize, memoPressA));
-                    outcomes.add(pressB(state, prize, memoPressB));
-                });
-            }
-
-            return outcomes;
-        }
-
-        Optional<IterationState> pressA(IterationState previousState,
-                Pair<Integer, Integer> target,
-                Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressA) {
-            if (previousState.numberOfAPresses() >= MAX_PRESSES
-                    || previousState.position().x() > target.x()
-                    || previousState.position().y() > target.y())
+            if (maybeSolution.isEmpty())
                 return Optional.empty();
 
-            Pair<Integer, Integer> nextPosition = memoPressA.computeIfAbsent(previousState.position(),
-                    position -> Pair.sum(position, buttonA));
+            var solution = maybeSolution.get();
 
-            return Optional.of(new IterationState(previousState.numberOfAPresses() + 1,
-                    previousState.numberOfBPresses(),
-                    nextPosition));
-        }
-
-        Optional<IterationState> pressB(IterationState previousState,
-                Pair<Integer, Integer> target,
-                Map<Pair<Integer, Integer>, Pair<Integer, Integer>> memoPressB) {
-            if (previousState.numberOfBPresses() >= MAX_PRESSES
-                    || previousState.position().x() > target.x()
-                    || previousState.position().y() > target.y())
+            if (solution.x() < 0 || solution.x() > MAX_PRESSES || solution.y() < 0 || solution.y() > MAX_PRESSES
+                    || !isExactSolution(solution))
                 return Optional.empty();
 
-            Pair<Integer, Integer> nextPosition = memoPressB.computeIfAbsent(previousState.position(),
-                    position -> Pair.sum(position, buttonB));
+            return Optional.of(solution);
+        }
 
-            return Optional.of(new IterationState(previousState.numberOfAPresses(),
-                    previousState.numberOfBPresses() + 1,
-                    nextPosition));
+        boolean isExactSolution(Pair<Integer, Integer> candidateSolution) {
+            var a = candidateSolution.first();
+            var b = candidateSolution.second();
+
+            // The numbers should be small enough to do the check
+            // as integers.
+            return (a * buttonA.x() + b * buttonB.x() == prize.x())
+                    && (a * buttonA.y() + b * buttonB.y() == prize.y());
         }
 
     }
-
-    record IterationState(int numberOfAPresses, int numberOfBPresses, Pair<Integer, Integer> position) {
-        public int cost() {
-            return 3 * numberOfAPresses() + numberOfBPresses();
-        }
-    }
-
 }
