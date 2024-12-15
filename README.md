@@ -23,9 +23,9 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | 9   | ✅      | ✅    |
 | 10  | ✅      | ✅    |
 | 11  | ✅      | ✅    |
-| 12  | ➖      | ➖    |
-| 13  | ➖      | ➖    |
-| 14  | ➖      | ➖    |
+| 12  | ✅      | ❌    |
+| 13  | ✅      | ✅    |
+| 14  | ✅      | ✅    |
 | 15  | ➖      | ➖    |
 | 16  | ➖      | ➖    |
 | 17  | ➖      | ➖    |
@@ -50,6 +50,17 @@ The project exposes a REST API allowing you to upload a file containing your inp
 | PUT    | /solve/{day}/{part} | multipart/form-data |
 
 Day is a number between 1 and 25, representing the day of the challenge. Part is either 1 or 2, representing each part of the puzzle. The input file must be sent as part of the form, with the key `input`.
+
+For day 14, part 2, there are a few query parameters that control how the search for the solution is handled.
+
+| Parameter        | Type                    | Description         |
+|------------------|-------------------------|---------------------|
+| day_14_start     | Integer                 | Define where the iteration begins |
+| day_14_end       | Integer                 | Define where the iteration ends |
+| day_14_visualize | Boolean (true or false) | If true, will generate visualizations of each iteration instead of returning the solution |
+
+The last iteration (day_14_end) is cached, so the most efficient way to run the solution is to pass the same value that was used as day_14_end on the previous request, as day_14_start on the next request. Mathematically, using day_14_start=0/day_14_end=10403 should guarantee finding the solution.
+
 
 ## Running the application in dev mode
 
