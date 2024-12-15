@@ -26,7 +26,7 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | 12  | ✅      | ❌    |
 | 13  | ✅      | ✅    |
 | 14  | ✅      | ✅    |
-| 15  | ➖      | ➖    |
+| 15  | ✅      | ❌    |
 | 16  | ➖      | ➖    |
 | 17  | ➖      | ➖    |
 | 18  | ➖      | ➖    |
