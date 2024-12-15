@@ -1,8 +1,12 @@
 package com.adventofcode.solutions;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.adventofcode.util.Direction;
 import com.adventofcode.util.Pair;
@@ -29,8 +33,22 @@ public enum Day15 implements Solver<Integer, Integer> {
 
     @Override
     public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+
+        var parsedInput = parseInputWide(input);
+        var warehouse = parsedInput.first();
+        var directions = parsedInput.second();
+
+        var currentPosition = warehouse.findRobotPosition().get();
+
+        for (var direction : directions) {
+
+            var nextPosition = Pair.sum(currentPosition, direction.asPair());
+            if (tryMoving(currentPosition, direction, warehouse))
+                currentPosition = nextPosition;
+
+        }
+
+        return warehouse.sumOfBoxGPS();
     }
 
     boolean tryMoving(Pair<Integer, Integer> currentPosition, Direction direction, Warehouse warehouse) {
@@ -48,7 +66,10 @@ public enum Day15 implements Solver<Integer, Integer> {
             case EmptyTile empty -> false;
             case Robot bot -> {
                 if (nextTile instanceof EmptyTile
-                        || nextTile instanceof Box && tryMoving(nextPosition, direction, warehouse)) {
+                        || ((nextTile instanceof Box
+                                || nextTile instanceof WideBoxLeft
+                                || nextTile instanceof WideBoxRight)
+                                && tryMoving(nextPosition, direction, warehouse))) {
                     warehouse.set(currentPosition, new EmptyTile());
                     warehouse.set(nextPosition, currentTile);
                     yield true;
@@ -57,15 +78,105 @@ public enum Day15 implements Solver<Integer, Integer> {
             }
             case Box box -> {
                 if (nextTile instanceof EmptyTile
-                        || nextTile instanceof Box && tryMoving(nextPosition, direction, warehouse)) {
+                        || (nextTile instanceof Box && tryMoving(nextPosition, direction, warehouse))) {
                     warehouse.set(currentPosition, new EmptyTile());
                     warehouse.set(nextPosition, currentTile);
                     yield true;
                 }
                 yield false;
             }
+            case WideBoxLeft box ->
+                tryMovingWideBox(currentPosition, direction, warehouse, new HashSet<>(), new HashMap<>());
+            case WideBoxRight box ->
+                tryMovingWideBox(currentPosition, direction, warehouse, new HashSet<>(), new HashMap<>());
             default -> false;
         };
+    }
+
+    boolean tryMovingWideBox(Pair<Integer, Integer> currentPosition, Direction direction,
+            Warehouse warehouse, Set<Pair<Integer, Integer>> waiting,
+            Map<Pair<Integer, Integer>, Boolean> resolved) {
+
+        var currentTile = warehouse.get(currentPosition);
+
+        var nextPosition = Pair.sum(currentPosition, direction.asPair());
+        var nextTile = warehouse.get(nextPosition);
+
+        if (nextTile instanceof Wall)
+            return false;
+
+        return switch (direction) {
+            case LEFT, RIGHT -> {
+                if (nextTile instanceof EmptyTile
+                        || ((nextTile instanceof WideBoxLeft || nextTile instanceof WideBoxRight)
+                                && tryMovingWideBox(nextPosition, direction, warehouse, waiting, resolved))) {
+                    warehouse.set(currentPosition, new EmptyTile());
+                    warehouse.set(nextPosition, currentTile);
+                    resolved.put(currentPosition, true);
+                    yield true;
+                }
+                resolved.put(currentPosition, false);
+                yield false;
+            }
+            case UP, DOWN -> {
+                var otherSide = switch (currentTile) {
+                    case WideBoxLeft box -> Pair.sum(currentPosition, Direction.RIGHT.asPair());
+                    case WideBoxRight box -> Pair.sum(currentPosition, Direction.LEFT.asPair());
+                    default -> throw new IllegalStateException();
+                };
+
+                var warehouseCopy = warehouse.copy();
+
+                if (waiting.contains(otherSide)) {
+                    if (nextTile instanceof EmptyTile
+                            || ((nextTile instanceof WideBoxLeft || nextTile instanceof WideBoxRight)
+                                    && tryMovingWideBox(nextPosition, direction, warehouse, waiting, resolved))) {
+
+                        warehouse.set(currentPosition, new EmptyTile());
+                        warehouse.set(nextPosition, currentTile);
+
+                        resolved.put(currentPosition, true);
+                        yield true;
+                    }
+
+                    resolved.put(currentPosition, false);
+                    yield false;
+
+                } else if (resolved.values().contains(false)) {
+                    warehouse.set(warehouseCopy);
+                    yield false;
+                } else {
+                    boolean result;
+
+                    waiting.add(currentPosition);
+                    result = tryMovingWideBox(otherSide, direction, warehouse, waiting, resolved);
+                    waiting.remove(currentPosition);
+
+                    waiting.add(otherSide);
+                    result &= tryMovingWideBox(currentPosition, direction, warehouse, waiting, resolved);
+                    waiting.remove(otherSide);
+
+                    if (!result)
+                        warehouse.set(warehouseCopy);
+
+                    yield result;
+                }
+            }
+            default -> false;
+        };
+    }
+
+    boolean canTileBeMoved(Pair<Integer, Integer> position, Direction direction, Warehouse warehouse) {
+        Pair<Integer, Integer> currentPosition = position;
+        while (true) {
+            currentPosition = Pair.sum(currentPosition, direction.asPair());
+            var currentTile = warehouse.get(currentPosition);
+
+            if (currentTile instanceof EmptyTile)
+                return true;
+            if (currentTile instanceof Wall)
+                return false;
+        }
     }
 
     Pair<Warehouse, List<Direction>> parseInput(String input) {
@@ -104,6 +215,45 @@ public enum Day15 implements Solver<Integer, Integer> {
                         (a, b) -> a.addAll(b));
     }
 
+    Pair<Warehouse, List<Direction>> parseInputWide(String input) {
+        List<List<Tile>> tiles = new ArrayList<>();
+        List<Direction> directions = new ArrayList<>();
+
+        input.lines()
+                .filter(line -> !line.isBlank())
+                .forEach(line -> {
+                    char firstChar = line.charAt(0);
+
+                    if (firstChar == '#')
+                        tiles.add(parseMapLineWide(line));
+                    else if (firstChar == '^'
+                            || firstChar == '>'
+                            || firstChar == 'v'
+                            || firstChar == '<')
+                        directions.addAll(parseDirectionLine(line));
+                });
+
+        return new Pair<>(new Warehouse(tiles), directions);
+    }
+
+    List<Tile> parseMapLineWide(String line) {
+        ArrayList<Tile> result = new ArrayList<>();
+
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+
+            result.addAll(switch (ch) {
+                case '#' -> List.of(new Wall(), new Wall());
+                case 'O' -> List.of(new WideBoxLeft(), new WideBoxRight());
+                case '@' -> List.of(new Robot(), new EmptyTile());
+                case '.' -> List.of(new EmptyTile(), new EmptyTile());
+                default -> throw new IllegalStateException();
+            });
+        }
+
+        return result;
+    }
+
     List<Direction> parseDirectionLine(String line) {
         return line.chars()
                 .sequential()
@@ -118,6 +268,18 @@ public enum Day15 implements Solver<Integer, Integer> {
     }
 
     record Warehouse(List<List<Tile>> tiles) {
+        Warehouse copy() {
+            return new Warehouse(this.tiles().stream()
+                    .map(list -> (List<Tile>) list.stream()
+                            .map(Tile::copy)
+                            .collect(() -> new ArrayList<Tile>(),
+                                    (a, b) -> a.add(b),
+                                    (a, b) -> a.addAll(b)))
+                    .collect(() -> new ArrayList<List<Tile>>(),
+                            (a, b) -> a.add(b),
+                            (a, b) -> a.addAll(b)));
+        }
+
         Tile get(Pair<Integer, Integer> position) {
             final int x = position.x();
             final int y = position.y();
@@ -157,12 +319,18 @@ public enum Day15 implements Solver<Integer, Integer> {
             for (int y = 0; y < rows; ++y) {
                 for (int x = 0; x < columns; ++x) {
                     var candidatePosition = new Pair<>(x, y);
-                    if (get(candidatePosition) instanceof Box)
+                    var candidateTile = get(candidatePosition);
+                    if (candidateTile instanceof Box || candidateTile instanceof WideBoxLeft)
                         sum += 100 * y + x;
                 }
             }
 
             return sum;
+        }
+
+        void set(Warehouse other) {
+            this.tiles.clear();
+            this.tiles.addAll(other.tiles);
         }
 
         @Override
@@ -188,9 +356,33 @@ public enum Day15 implements Solver<Integer, Integer> {
         }
     }
 
+    public record WideBoxLeft() implements Tile {
+        public String type() {
+            return "[";
+        }
+
+        public Tile copy() {
+            return new WideBoxLeft();
+        }
+    }
+
+    public record WideBoxRight() implements Tile {
+        public String type() {
+            return "]";
+        }
+
+        public Tile copy() {
+            return new WideBoxRight();
+        }
+    }
+
     public record Box() implements Tile {
         public String type() {
             return "O";
+        }
+
+        public Box copy() {
+            return new Box();
         }
     }
 
@@ -198,11 +390,19 @@ public enum Day15 implements Solver<Integer, Integer> {
         public String type() {
             return "@";
         }
+
+        public Tile copy() {
+            return new Robot();
+        }
     }
 
     public record Wall() implements Tile {
         public String type() {
             return "#";
+        }
+
+        public Tile copy() {
+            return new Wall();
         }
     }
 
@@ -210,9 +410,15 @@ public enum Day15 implements Solver<Integer, Integer> {
         public String type() {
             return ".";
         }
+
+        public Tile copy() {
+            return new EmptyTile();
+        }
     }
 
-    sealed interface Tile permits Box, Robot, Wall, EmptyTile {
+    sealed interface Tile permits Box, WideBoxLeft, WideBoxRight, Robot, Wall, EmptyTile {
         public String type();
+
+        public Tile copy();
     }
 }
