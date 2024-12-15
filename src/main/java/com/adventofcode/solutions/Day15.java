@@ -107,6 +107,7 @@ public enum Day15 implements Solver<Integer, Integer> {
 
         return switch (direction) {
             case LEFT, RIGHT -> {
+                // For horizontal movement, the logic is the same as the one for small boxes
                 if (nextTile instanceof EmptyTile
                         || ((nextTile instanceof WideBoxLeft || nextTile instanceof WideBoxRight)
                                 && tryMovingWideBox(nextPosition, direction, warehouse, waiting, resolved))) {
@@ -119,6 +120,8 @@ public enum Day15 implements Solver<Integer, Integer> {
                 yield false;
             }
             case UP, DOWN -> {
+                // For vertical movement it is necessary to check if the other side of the box
+                // can move.
                 var otherSide = switch (currentTile) {
                     case WideBoxLeft box -> Pair.sum(currentPosition, Direction.RIGHT.asPair());
                     case WideBoxRight box -> Pair.sum(currentPosition, Direction.LEFT.asPair());
@@ -127,6 +130,8 @@ public enum Day15 implements Solver<Integer, Integer> {
 
                 var warehouseCopy = warehouse.copy();
 
+                // If the other side of the box is already awaiting for the result, just apply
+                // the normal recursive check.
                 if (waiting.contains(otherSide)) {
                     if (nextTile instanceof EmptyTile
                             || ((nextTile instanceof WideBoxLeft || nextTile instanceof WideBoxRight)
@@ -143,11 +148,13 @@ public enum Day15 implements Solver<Integer, Integer> {
                     yield false;
 
                 } else if (resolved.values().contains(false)) {
+                    // If any path failed, revert any modification
                     warehouse.set(warehouseCopy);
                     yield false;
                 } else {
                     boolean result;
 
+                    // Recursively check the both sides of the box.
                     waiting.add(currentPosition);
                     result = tryMovingWideBox(otherSide, direction, warehouse, waiting, resolved);
                     waiting.remove(currentPosition);
