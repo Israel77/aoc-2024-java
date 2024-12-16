@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 import com.adventofcode.graphs.implementations.SimpleGraph;
 import com.adventofcode.graphs.interfaces.Graph;
@@ -120,9 +121,6 @@ public enum Day16 implements Solver<Integer, Integer> {
 
         var currentDirection = Direction.RIGHT;
 
-        Collection<Pair<Integer, Integer>> openSet = new HashSet<>();
-        openSet.add(start);
-
         Map<Pair<Integer, Integer>, Pair<Integer, Integer>> cameFrom = new HashMap<>();
 
         Map<Pair<Integer, Integer>, Integer> gScore = new HashMap<>();
@@ -131,11 +129,13 @@ public enum Day16 implements Solver<Integer, Integer> {
         Map<Pair<Integer, Integer>, Integer> fScore = new HashMap<>();
         fScore.put(start, costHeuristic(start, end));
 
+        PriorityQueue<Pair<Integer, Integer>> openSet = new PriorityQueue<>(
+                (a, b) -> Integer.compare(fScore.getOrDefault(a, DEFAULT_COST),
+                        fScore.getOrDefault(b, DEFAULT_COST)));
+        openSet.add(start);
+
         while (!openSet.isEmpty()) {
-            var current = openSet.stream()
-                    .sorted((a, b) -> Integer.compare(fScore.get(a), fScore.get(b)))
-                    .findFirst()
-                    .get();
+            var current = openSet.peek();
 
             if (current.equals(end)) {
                 return reconstructPath(cameFrom, current);
