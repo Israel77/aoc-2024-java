@@ -29,6 +29,20 @@ public enum Direction {
         };
     }
 
+    public static Direction fromPair(Pair<Integer, Integer> pair) {
+
+        if (pair.x() == 0 && pair.y() == 1)
+            return Direction.DOWN;
+        if (pair.x() == 0 && pair.y() == -1)
+            return Direction.UP;
+        if (pair.x() == 1 && pair.y() == 0)
+            return Direction.RIGHT;
+        if (pair.x() == -1 && pair.y() == 0)
+            return Direction.LEFT;
+
+        throw new IllegalArgumentException("Invalid conversion");
+    }
+
     public Direction rotateClockwise() {
         return switch (this) {
             case UP -> RIGHT;
