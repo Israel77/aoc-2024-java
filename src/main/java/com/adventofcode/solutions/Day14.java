@@ -152,7 +152,7 @@ public class Day14 implements Solver<Integer, String> {
         return false;
     }
 
-    private String printRobots(List<Pair<Integer, Integer>> positions, Pair<Integer, Integer> availableSpace) {
+    String printRobots(List<Pair<Integer, Integer>> positions, Pair<Integer, Integer> availableSpace) {
         Map<Pair<Integer, Integer>, Integer> counter = new HashMap<>();
 
         for (var position : positions) {
