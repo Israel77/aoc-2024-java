@@ -1,6 +1,7 @@
 package com.adventofcode.graphs.implementations;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +14,8 @@ import com.adventofcode.util.Pair;
  */
 public class SimpleGraph<V> implements Graph<V> {
 
-    Set<V> _vertices;
-    Map<V, Collection<V>> adjacencyList;
+    Set<V> _vertices = new HashSet<>();
+    Map<V, Collection<V>> adjacencyList = new HashMap<>();
 
     @Override
     public boolean addVertex(V vertex) {
@@ -34,7 +35,10 @@ public class SimpleGraph<V> implements Graph<V> {
 
     @Override
     public boolean addEdge(V source, V destination) {
-        if (adjacencyList.get(source).contains(destination) || adjacencyList.get(destination).contains(source))
+        if (!_vertices.contains(source)
+                || !_vertices.contains(destination)
+                || adjacencyList.get(source).contains(destination)
+                || adjacencyList.get(destination).contains(source))
             return false;
 
         return adjacencyList.get(source).add(destination) && adjacencyList.get(destination).add(source);
