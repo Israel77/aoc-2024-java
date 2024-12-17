@@ -1,11 +1,10 @@
 package com.adventofcode.solutions;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.PriorityQueue;
 
 import com.adventofcode.graphs.implementations.SimpleGraph;
@@ -20,55 +19,106 @@ public enum Day16 implements Solver<Integer, Integer> {
     public Integer solvePart1(String input) {
 
         Maze maze = parseInput(input);
-        List<Pair<Integer, Integer>> optimalPath = findOptimalPath(maze);
+        final int DEFAULT_COST = (maze.width() + maze.height()) * 1000;
 
-        return calculateCostFromPath(optimalPath);
+        List<Pair<Integer, Integer>> optimalPath = findOptimalPath(
+                maze.graph(), maze.start(), maze.end(), Direction.RIGHT,
+                DEFAULT_COST);
+
+        return calculateCostFromPath(optimalPath, Direction.RIGHT, Optional.empty());
     }
 
     @Override
     public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+
+        Maze maze = parseInput(input);
+
+        return findVerticesInMinimalPaths(maze)
+                .size();
     }
 
-    String printPath(List<Pair<Integer, Integer>> path, Maze maze) {
+    List<Pair<Integer, Integer>> findVerticesInMinimalPaths(Maze maze) {
 
-        StringBuilder sb = new StringBuilder();
+        var graph = maze.graph();
+        var start = maze.start();
+        var end = maze.end();
 
-        for (int y = 0; y < maze.height(); ++y) {
-            StringBuilder line = new StringBuilder();
+        final int DEFAULT_COST = (maze.width() + maze.height()) * 1000;
 
-            for (int x = 0; x < maze.width(); x++) {
-                var position = new Pair<>(x, y);
+        Map<Pair<Integer, Integer>, Integer> costsFromStart = new HashMap<>();
+        Map<Pair<Integer, Integer>, Integer> costsToEnd = new HashMap<>();
+        Map<Integer, List<Pair<Integer, Integer>>> totalCosts = new HashMap<>();
 
-                if (position.equals(maze.start())) {
-                    line.append('S');
-                } else if (position.equals(maze.end())) {
-                    line.append('E');
-                } else if (path.contains(position)) {
-                    line.append('O');
-                } else if (maze.graph().containsVertex(position)) {
-                    line.append('.');
-                } else {
-                    line.append('#');
-                }
+        int knownOptimalCost = calculateCostFromPath(findOptimalPath(graph, start,
+                end, Direction.RIGHT, DEFAULT_COST),
+                Direction.RIGHT, Optional.empty());
+
+        for (var vertex : graph.vertices().stream()
+                .sorted((a, b) -> Integer.compare(a.first(), b.first()))
+                .toList()) {
+            boolean isPathPossible = true;
+
+            var pathFromStart = findOptimalPath(graph, start, vertex, Direction.RIGHT, DEFAULT_COST);
+            int pathLength = pathFromStart.size();
+
+            isPathPossible &= !pathFromStart.isEmpty();
+
+            int costFromStart;
+
+            // Kinda ugly, but using computeIfAbsent would throw a
+            // ConcurrentModificationException
+            if (costsFromStart.containsKey(vertex)) {
+                costFromStart = costsFromStart.get(vertex);
+            } else {
+                costFromStart = calculateCostFromPath(pathFromStart, Direction.RIGHT, Optional.empty());
             }
 
-            line.append('\n');
-            sb.append(line);
+            var directionFromStart = vertex.equals(start)
+                    ? Direction.RIGHT
+                    : getDirection(pathFromStart.get(pathLength - 2),
+                            pathFromStart.get(pathLength - 1));
+
+            int costToEnd;
+
+            if (costsToEnd.containsKey(vertex)) {
+                costToEnd = costsToEnd.get(vertex);
+            } else {
+                var pathToEnd = findOptimalPath(graph, vertex, end, directionFromStart, DEFAULT_COST);
+                costToEnd = calculateCostFromPath(pathToEnd, directionFromStart, Optional.empty());
+
+                isPathPossible &= !pathToEnd.isEmpty();
+            }
+
+            if (isPathPossible) {
+                int totalCost = costFromStart + costToEnd;
+
+                List<Pair<Integer, Integer>> sameCost = totalCosts.getOrDefault(totalCost, new ArrayList<>());
+                sameCost.add(vertex);
+
+                totalCosts.put(totalCost, sameCost);
+            }
         }
 
-        return sb.toString();
+        // int minCost = totalCosts.keySet().stream()
+        // .mapToInt(Integer::valueOf)
+        // .min()
+        // .getAsInt();
 
+        totalCosts.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(a.getKey(), b.getKey()))
+                .forEach(System.out::println);
+
+        return totalCosts.get(knownOptimalCost);
     }
 
-    private int calculateCostFromPath(List<Pair<Integer, Integer>> path) {
+    private int calculateCostFromPath(List<Pair<Integer, Integer>> path,
+            Direction initialDirection,
+            Optional<Map<Pair<Integer, Integer>, Integer>> recordedCost) {
 
         int steps = 0;
         int turns = 0;
 
-        // Always start facing east/right
-        Direction lastDirection = Direction.RIGHT;
+        Direction lastDirection = initialDirection;
         Pair<Integer, Integer> lastPosition = null;
 
         for (var position : path) {
@@ -86,15 +136,18 @@ public enum Day16 implements Solver<Integer, Integer> {
 
             lastDirection = direction;
             lastPosition = position;
+
+            if (!recordedCost.isEmpty())
+                recordedCost.get().put(position, steps + turns * 1000);
         }
 
         return steps + turns * 1000;
     }
 
-    private Direction getDirection(Pair<Integer, Integer> lastPosition, Pair<Integer, Integer> position) {
+    private Direction getDirection(Pair<Integer, Integer> from, Pair<Integer, Integer> to) {
         Direction direction = Direction.fromPair(new Pair<>(
-                position.x() - lastPosition.x(),
-                position.y() - lastPosition.y()));
+                to.x() - from.x(),
+                to.y() - from.y()));
         return direction;
     }
 
@@ -111,15 +164,13 @@ public enum Day16 implements Solver<Integer, Integer> {
      * @param maze
      * @return
      */
-    List<Pair<Integer, Integer>> findOptimalPath(Maze maze) {
+    List<Pair<Integer, Integer>> findOptimalPath(Graph<Pair<Integer, Integer>> graph,
+            Pair<Integer, Integer> start,
+            Pair<Integer, Integer> end,
+            Direction initialDirection,
+            int defaultCost) {
 
-        final int DEFAULT_COST = (maze.width() + maze.height()) * 1000;
-
-        var graph = maze.graph();
-        var start = maze.start();
-        var end = maze.end();
-
-        var currentDirection = Direction.RIGHT;
+        var currentDirection = initialDirection;
 
         Map<Pair<Integer, Integer>, Pair<Integer, Integer>> cameFrom = new HashMap<>();
 
@@ -130,8 +181,8 @@ public enum Day16 implements Solver<Integer, Integer> {
         fScore.put(start, costHeuristic(start, end));
 
         PriorityQueue<Pair<Integer, Integer>> openSet = new PriorityQueue<>(
-                (a, b) -> Integer.compare(fScore.getOrDefault(a, DEFAULT_COST),
-                        fScore.getOrDefault(b, DEFAULT_COST)));
+                (a, b) -> Integer.compare(fScore.getOrDefault(a, defaultCost),
+                        fScore.getOrDefault(b, defaultCost)));
         openSet.add(start);
 
         while (!openSet.isEmpty()) {
@@ -159,9 +210,9 @@ public enum Day16 implements Solver<Integer, Integer> {
 
                 int costToNeighbor = currentDirection == direction ? 1 : 1000;
 
-                int tentativeGScore = gScore.getOrDefault(current, DEFAULT_COST) + costToNeighbor;
+                int tentativeGScore = gScore.getOrDefault(current, defaultCost) + costToNeighbor;
 
-                if (tentativeGScore < gScore.getOrDefault(neighbor, DEFAULT_COST)) {
+                if (tentativeGScore < gScore.getOrDefault(neighbor, defaultCost)) {
                     cameFrom.put(neighbor, current);
                     gScore.put(neighbor, tentativeGScore);
                     fScore.put(neighbor, tentativeGScore + costHeuristic(neighbor,
@@ -242,6 +293,37 @@ public enum Day16 implements Solver<Integer, Integer> {
         }
 
         return new Maze(graph, start, end, chars.get(0).size(), chars.size());
+    }
+
+    String printPath(List<Pair<Integer, Integer>> path, Maze maze) {
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int y = 0; y < maze.height(); ++y) {
+            StringBuilder line = new StringBuilder();
+
+            for (int x = 0; x < maze.width(); x++) {
+                var position = new Pair<>(x, y);
+
+                if (position.equals(maze.start())) {
+                    line.append('S');
+                } else if (position.equals(maze.end())) {
+                    line.append('E');
+                } else if (path.contains(position)) {
+                    line.append('O');
+                } else if (maze.graph().containsVertex(position)) {
+                    line.append('.');
+                } else {
+                    line.append('#');
+                }
+            }
+
+            line.append('\n');
+            sb.append(line);
+        }
+
+        return sb.toString();
+
     }
 
     record Maze(Graph<Pair<Integer, Integer>> graph, Pair<Integer, Integer> start,
