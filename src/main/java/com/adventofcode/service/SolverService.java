@@ -20,6 +20,7 @@ import com.adventofcode.solutions.Day13;
 import com.adventofcode.solutions.Day14;
 import com.adventofcode.solutions.Day15;
 import com.adventofcode.solutions.Day16;
+import com.adventofcode.solutions.Day17;
 import com.adventofcode.solutions.Day2;
 import com.adventofcode.solutions.Day3;
 import com.adventofcode.solutions.Day4;
@@ -67,6 +68,7 @@ public class SolverService {
                     false || request.getDay14Visualize());
             case DAY_15 -> Day15.INSTANCE;
             case DAY_16 -> Day16.INSTANCE;
+            case DAY_17 -> Day17.INSTANCE;
             default -> throw new UnsupportedOperationException("Solution not implemented yet");
         };
     }
