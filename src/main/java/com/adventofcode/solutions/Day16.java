@@ -1,11 +1,16 @@
 package com.adventofcode.solutions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import com.adventofcode.graphs.implementations.SimpleGraph;
 import com.adventofcode.graphs.interfaces.Graph;
@@ -25,7 +30,7 @@ public enum Day16 implements Solver<Integer, Integer> {
                 maze.graph(), maze.start(), maze.end(), Direction.RIGHT,
                 DEFAULT_COST);
 
-        return calculateCostFromPath(optimalPath, Direction.RIGHT, Optional.empty());
+        return calculateCostFromPath(optimalPath, Direction.RIGHT);
     }
 
     @Override
@@ -37,7 +42,7 @@ public enum Day16 implements Solver<Integer, Integer> {
                 .size();
     }
 
-    List<Pair<Integer, Integer>> findVerticesInMinimalPaths(Maze maze) {
+    Collection<Pair<Integer, Integer>> findVerticesInMinimalPaths(Maze maze) {
 
         var graph = maze.graph();
         var start = maze.start();
@@ -45,21 +50,31 @@ public enum Day16 implements Solver<Integer, Integer> {
 
         final int DEFAULT_COST = (maze.width() + maze.height()) * 1000;
 
-        Map<Pair<Integer, Integer>, Integer> costsFromStart = new HashMap<>();
-        Map<Pair<Integer, Integer>, Integer> costsToEnd = new HashMap<>();
+        Map<Pair<Integer, Integer>, List<Pair<Integer, Integer>>> pathsFromStart = new ConcurrentHashMap<>();
+        Map<Pair<Integer, Integer>, List<Pair<Integer, Integer>>> pathsToEnd = new ConcurrentHashMap<>();
         Map<Integer, List<Pair<Integer, Integer>>> totalCosts = new HashMap<>();
 
         int knownOptimalCost = calculateCostFromPath(findOptimalPath(graph, start,
-                end, Direction.RIGHT, DEFAULT_COST),
-                Direction.RIGHT, Optional.empty());
+                end, Direction.RIGHT, DEFAULT_COST), Direction.RIGHT);
 
-        for (var vertex : graph.vertices().stream()
-                .sorted((a, b) -> Integer.compare(a.first(), b.first()))
-                .toList()) {
+        Set<Pair<Integer, Integer>> minimalPathsVertices = new HashSet<>();
+
+        for (var vertex : graph.vertices()) {
             boolean isPathPossible = true;
 
-            var pathFromStart = findOptimalPath(graph, start, vertex, Direction.RIGHT, DEFAULT_COST);
+            var pathFromStart = pathsFromStart.computeIfAbsent(vertex,
+                    v -> findOptimalPath(graph, start, v, Direction.RIGHT, DEFAULT_COST));
             int pathLength = pathFromStart.size();
+
+            IntStream.range(0, pathLength)
+                    .parallel()
+                    .forEach(i -> {
+                        // for (int i = 0; i < pathLength; ++i) {
+                        final int viewEnd = i + 1;
+                        var intermediateVertex = pathFromStart.get(i);
+                        pathsFromStart.computeIfAbsent(intermediateVertex,
+                                v -> pathFromStart.subList(0, viewEnd));
+                    });
 
             isPathPossible &= !pathFromStart.isEmpty();
 
@@ -67,11 +82,7 @@ public enum Day16 implements Solver<Integer, Integer> {
 
             // Kinda ugly, but using computeIfAbsent would throw a
             // ConcurrentModificationException
-            if (costsFromStart.containsKey(vertex)) {
-                costFromStart = costsFromStart.get(vertex);
-            } else {
-                costFromStart = calculateCostFromPath(pathFromStart, Direction.RIGHT, Optional.empty());
-            }
+            costFromStart = calculateCostFromPath(pathFromStart, Direction.RIGHT);
 
             var directionFromStart = vertex.equals(start)
                     ? Direction.RIGHT
@@ -80,22 +91,31 @@ public enum Day16 implements Solver<Integer, Integer> {
 
             int costToEnd;
 
-            if (costsToEnd.containsKey(vertex)) {
-                costToEnd = costsToEnd.get(vertex);
-            } else {
-                var pathToEnd = findOptimalPath(graph, vertex, end, directionFromStart, DEFAULT_COST);
-                costToEnd = calculateCostFromPath(pathToEnd, directionFromStart, Optional.empty());
+            var pathToEnd = pathsToEnd.computeIfAbsent(vertex,
+                    v -> findOptimalPath(graph, v, end, directionFromStart, DEFAULT_COST));
+            costToEnd = calculateCostFromPath(pathToEnd, directionFromStart);
 
-                isPathPossible &= !pathToEnd.isEmpty();
-            }
+            isPathPossible &= !pathToEnd.isEmpty();
 
-            if (isPathPossible) {
-                int totalCost = costFromStart + costToEnd;
+            IntStream.range(0, pathToEnd.size())
+                    .parallel()
+                    .forEach(i -> {
+                        // for (int i = 0; i < pathToEnd.size(); ++i) {
+                        final int viewStart = i;
+                        var intermediateVertex = pathToEnd.get(i);
+                        pathsToEnd.computeIfAbsent(intermediateVertex, v -> pathToEnd.subList(viewStart,
+                                pathToEnd.size()));
+                    });
 
-                List<Pair<Integer, Integer>> sameCost = totalCosts.getOrDefault(totalCost, new ArrayList<>());
-                sameCost.add(vertex);
+            int totalCost = costFromStart + costToEnd;
+            if (isPathPossible && totalCost == knownOptimalCost) {
 
-                totalCosts.put(totalCost, sameCost);
+                // List<Pair<Integer, Integer>> sameCost = totalCosts.getOrDefault(totalCost,
+                // new ArrayList<>());
+                // sameCost.add(vertex);
+
+                // totalCosts.put(totalCost, sameCost);
+                minimalPathsVertices.add(vertex);
             }
         }
 
@@ -104,16 +124,11 @@ public enum Day16 implements Solver<Integer, Integer> {
         // .min()
         // .getAsInt();
 
-        totalCosts.entrySet().stream()
-                .sorted((a, b) -> Integer.compare(a.getKey(), b.getKey()))
-                .forEach(System.out::println);
-
-        return totalCosts.get(knownOptimalCost);
+        return minimalPathsVertices;
     }
 
     private int calculateCostFromPath(List<Pair<Integer, Integer>> path,
-            Direction initialDirection,
-            Optional<Map<Pair<Integer, Integer>, Integer>> recordedCost) {
+            Direction initialDirection) {
 
         int steps = 0;
         int turns = 0;
@@ -136,9 +151,6 @@ public enum Day16 implements Solver<Integer, Integer> {
 
             lastDirection = direction;
             lastPosition = position;
-
-            if (!recordedCost.isEmpty())
-                recordedCost.get().put(position, steps + turns * 1000);
         }
 
         return steps + turns * 1000;
