@@ -1,13 +1,16 @@
 package com.adventofcode.solutions;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public enum Day17 implements Solver<String, Integer> {
+public enum Day17 implements Solver<String, BigInteger> {
     INSTANCE;
 
     @Override
@@ -20,9 +23,9 @@ public enum Day17 implements Solver<String, Integer> {
     }
 
     @Override
-    public Integer solvePart2(String input) {
-        // TODO Auto-generated method stub
-        return Solver.super.solvePart2(input);
+    public BigInteger solvePart2(String input) {
+        BigInteger quine = parseInput(input).findQuine();
+        return quine;
     }
 
     CPU parseInput(String input) {
@@ -74,7 +77,7 @@ public enum Day17 implements Solver<String, Integer> {
         return new CPU(registerA, registerB, registerC, program);
     }
 
-    public static class CPU {
+    public static class CPU implements Cloneable {
 
         int registerA;
         int registerB;
@@ -101,12 +104,59 @@ public enum Day17 implements Solver<String, Integer> {
             final int programSize = program.size();
 
             while (instructionPointer < programSize - 1) {
-                Instruction instruction = Instruction.valueOf(program.get(instructionPointer));
-                int operand = program.get(instructionPointer + 1);
-
-                if (parseInstruction(instruction, operand))
-                    instructionPointer += 2;
+                step();
             }
+
+            return this;
+        }
+
+        public BigInteger findQuine() {
+
+            int programSize = program.size();
+            List<Integer> accumulator = new ArrayList<>();
+
+            for (int i = 0; i < programSize; ++i) {
+
+                var currentGoal = program.get(i);
+
+                for (int candidateA = 0;; candidateA++) {
+                    var cpu = new CPU(candidateA, 0, 0, new ArrayList<>(program));
+
+                    cpu.run();
+
+                    if (cpu.output().findFirst().get() % 8 == currentGoal) {
+                        accumulator.add(candidateA);
+                        break;
+                    }
+                }
+
+            }
+
+            BigInteger result = BigInteger.valueOf(0);
+
+            final Map<Integer, BigInteger> powersOf8 = new HashMap<>();
+            powersOf8.put(0, BigInteger.valueOf(1));
+
+            for (int i = 0; i < accumulator.size(); ++i) {
+
+                var power = powersOf8.computeIfAbsent(i, v -> {
+                    return powersOf8.get(v - 1).multiply(BigInteger.valueOf(8));
+                });
+
+                result = result.add(
+                        BigInteger.valueOf(accumulator.get(i)).multiply(
+                                power));
+            }
+
+            return result;
+        }
+
+        private CPU step() {
+            Instruction instruction = Instruction.valueOf(program.get(instructionPointer));
+            int operand = program.get(instructionPointer + 1);
+
+            if (parseInstruction(instruction, operand))
+                instructionPointer += 2;
 
             return this;
         }
@@ -126,7 +176,7 @@ public enum Day17 implements Solver<String, Integer> {
                     yield true;
                 }
                 case BST -> {
-                    registerB = comboValue(operand) % 8;
+                    registerB = comboValue(operand) & 7;
                     yield true;
                 }
                 case JNZ -> {
@@ -141,7 +191,7 @@ public enum Day17 implements Solver<String, Integer> {
                     yield true;
                 }
                 case OUT -> {
-                    outputList.add(comboValue(operand) % 8);
+                    outputList.add(comboValue(operand) & 7);
                     yield true;
                 }
                 case BDV -> {
@@ -163,6 +213,11 @@ public enum Day17 implements Solver<String, Integer> {
                 case 6 -> registerC;
                 default -> throw new IllegalArgumentException("Invalid combo operand");
             };
+        }
+
+        @Override
+        public CPU clone() {
+            return new CPU(registerA, registerB, registerC, new ArrayList<>(program));
         }
 
         @Override

@@ -2,6 +2,7 @@ package com.adventofcode.solutions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,17 +31,36 @@ public class Day17Test {
             Program: 2,4,1,5,7,5,0,3,4,0,1,6,5,5,3,0
                         """;
 
+    String input3 = """
+            Register A: 117440
+            Register B: 0
+            Register C: 0
+
+            Program: 0,3,5,4,3,0
+                        """;
+
+    String input4 = """
+            Register A: 29328
+            Register B: 0
+            Register C: 0
+
+            Program: 0,1,5,4,3,0
+                        """;
+
     @Test
     @DisplayName("Should solve the example given in part 1")
     void testSolverPart1() {
-        System.out.println(solver.parseInput(input2));
         assertEquals("4,6,3,5,6,3,5,2,1,0", solver.solvePart1(input1));
         assertEquals("1,1,2,5,6,0", solver.solvePart1(input2));
+        assertEquals("0,3,5,4,3,0", solver.solvePart1(input3));
+        assertEquals("0,1,5,4,3,0", solver.solvePart1(input4));
     }
 
     @Test
     @DisplayName("Should solve the example given in part 2")
     void testSolverPart2() {
+        assertEquals(BigInteger.valueOf(29328), solver.solvePart2(input1));
+        assertEquals(BigInteger.valueOf(117440), solver.solvePart2(input3));
     }
 
     @Test
