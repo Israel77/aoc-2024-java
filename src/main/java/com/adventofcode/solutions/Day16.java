@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +51,6 @@ public enum Day16 implements Solver<Integer, Integer> {
 
         Map<Pair<Integer, Integer>, List<Pair<Integer, Integer>>> pathsFromStart = new ConcurrentHashMap<>();
         Map<Pair<Integer, Integer>, List<Pair<Integer, Integer>>> pathsToEnd = new ConcurrentHashMap<>();
-        Map<Integer, List<Pair<Integer, Integer>>> totalCosts = new HashMap<>();
 
         int knownOptimalCost = calculateCostFromPath(findOptimalPath(graph, start,
                 end, Direction.RIGHT, DEFAULT_COST), Direction.RIGHT);
@@ -69,7 +67,6 @@ public enum Day16 implements Solver<Integer, Integer> {
             IntStream.range(0, pathLength)
                     .parallel()
                     .forEach(i -> {
-                        // for (int i = 0; i < pathLength; ++i) {
                         final int viewEnd = i + 1;
                         var intermediateVertex = pathFromStart.get(i);
                         pathsFromStart.computeIfAbsent(intermediateVertex,
@@ -80,8 +77,6 @@ public enum Day16 implements Solver<Integer, Integer> {
 
             int costFromStart;
 
-            // Kinda ugly, but using computeIfAbsent would throw a
-            // ConcurrentModificationException
             costFromStart = calculateCostFromPath(pathFromStart, Direction.RIGHT);
 
             var directionFromStart = vertex.equals(start)
