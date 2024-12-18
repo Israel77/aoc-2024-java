@@ -28,8 +28,8 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | 14  | ✅      | ✅    |
 | 15  | ✅      | ✅    |
 | 16  | ✅      | ✅    |
-| 17  | ➖      | ➖    |
-| 18  | ➖      | ➖    |
+| 17  | ✅      | ❌    |
+| 18  | ✅      | ✅    |
 | 19  | ➖      | ➖    |
 | 20  | ➖      | ➖    |
 | 21  | ➖      | ➖    |
