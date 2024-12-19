@@ -160,29 +160,32 @@ public enum Day12 implements Solver<Long, Integer> {
         }
 
         public int sides() {
+            return numberOfPasses(findAllTrueCorners(corners())).entrySet().stream()
+                    .mapToInt(entry -> entry.getValue())
+                    .sum();
 
-            int turns = 0;
+            // int turns = 0;
 
-            var corners = corners();
-            Map<Corner, Integer> remainingVisits = numberOfPasses(corners);
+            // var corners = corners();
+            // Map<Corner, Integer> remainingVisits = numberOfPasses(corners);
 
-            Corner startingCorner = pickTrueCorner(corners);
+            // Corner startingCorner = pickTrueCorner(corners);
 
-            turns += countTurns(startingCorner, corners, remainingVisits);
+            // turns += countTurns(startingCorner, corners, remainingVisits);
 
-            List<Corner> unvisitedCorners = new ArrayList<>(corners.stream()
-                    .filter(corner -> remainingVisits.getOrDefault(corner, 0) > 0)
-                    .toList());
+            // List<Corner> unvisitedCorners = new ArrayList<>(corners.stream()
+            // .filter(corner -> remainingVisits.getOrDefault(corner, 0) > 0)
+            // .toList());
 
-            while (!unvisitedCorners.isEmpty()) {
-                startingCorner = unvisitedCorners.removeFirst();
+            // while (!unvisitedCorners.isEmpty()) {
+            // startingCorner = unvisitedCorners.removeFirst();
 
-                if (remainingVisits.getOrDefault(startingCorner, 0) > 0
-                        && isValidStart(startingCorner, corners))
-                    turns += countTurns(startingCorner, corners, remainingVisits);
-            }
+            // if (remainingVisits.getOrDefault(startingCorner, 0) > 0
+            // && isValidStart(startingCorner, corners))
+            // turns += countTurns(startingCorner, corners, remainingVisits);
+            // }
 
-            return turns;
+            // return turns;
         }
 
         private Corner pickTrueCorner(Set<Corner> corners) {
@@ -197,6 +200,21 @@ public enum Day12 implements Solver<Long, Integer> {
             } while (!validStart);
 
             return startingCorner;
+        }
+
+        private Collection<Corner> findAllTrueCorners(Set<Corner> corners) {
+
+            var cornerIterator = corners.iterator();
+            Corner possibleCorner;
+            var result = new ArrayList<Corner>();
+            do {
+                possibleCorner = cornerIterator.next();
+                if (isValidStart(possibleCorner, corners)) {
+                    result.add(possibleCorner);
+                }
+            } while (cornerIterator.hasNext());
+
+            return result;
         }
 
         private Map<Corner, Integer> numberOfPasses(Collection<Corner> corners) {

@@ -48,6 +48,14 @@ public class Day12Test {
                         ABBAAA
                         AAAAAA""";
 
+        String input6 = """
+                        AAAAAA
+                        AAABBA
+                        AAABBA
+                        ACCAAA
+                        ACCAAA
+                        AAAAAA""";
+
         @Test
         @DisplayName("Should solve the example given in part 1")
         void testSolverPart1() {
@@ -64,5 +72,6 @@ public class Day12Test {
                 assertEquals(1206, solver.solvePart2(input3));
                 assertEquals(236, solver.solvePart2(input4));
                 assertEquals(368, solver.solvePart2(input5));
+                assertEquals(368, solver.solvePart2(input6));
         }
 }
