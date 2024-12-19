@@ -2,13 +2,8 @@ package com.adventofcode.solutions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import com.adventofcode.util.Pair;
 
 public class Day18Test {
 
