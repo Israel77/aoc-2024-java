@@ -1,19 +1,19 @@
-package com.adventofcode.util;
+package com.adventofcode.util.counters;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Counter<T> implements Map<T, Long> {
+public class SimpleCounter<T> implements Counter<T, Long> {
 
     private Map<T, Long> innerMap;
 
-    public Counter() {
+    public SimpleCounter() {
         this.innerMap = new HashMap<>();
     }
 
-    public Counter(Collection<T> collection) {
+    public SimpleCounter(Collection<T> collection) {
         this.innerMap = new HashMap<>();
 
         for (var value : collection) {
@@ -26,6 +26,7 @@ public class Counter<T> implements Map<T, Long> {
      * 
      * @param object The object being counted
      */
+    @Override
     public void increment(T object) {
         innerMap.put(object, innerMap.getOrDefault(object, 0l) + 1);
     }
@@ -41,9 +42,40 @@ public class Counter<T> implements Map<T, Long> {
      * 
      * @param object The object being counted
      */
+    @Override
     public void decrement(T object) {
         // Count cannot be negative
         if (get(object) > 0l)
+            innerMap.put(object, innerMap.get(object) - 1);
+    }
+
+    /**
+     * Adds the given amount to the current count of the object
+     * 
+     * @param object The object being counted
+     * @param amount The amount to be added
+     */
+    @Override
+    public void incrementBy(T object, Long amount) {
+        innerMap.put(object, innerMap.getOrDefault(object, 0l) + amount);
+    }
+
+    /**
+     * Subtracts the given amount from the current count of the object, if its count
+     * is greater
+     * than zero, otherwise keep the same count.
+     * 
+     * Note: Setting a count to zero is not necessarily the same as removing
+     * the object, as methods that allow iteration over the keys, such as keySet()
+     * and entrySet() will still consider it. To properly remove an object from
+     * the Counter, use the remove method.
+     * 
+     * @param object The object being counted
+     */
+    @Override
+    public void decrementBy(T object, Long amount) {
+        // Count cannot be negative
+        if (get(object) - amount > 0l)
             innerMap.put(object, innerMap.get(object) - 1);
     }
 
@@ -136,5 +168,24 @@ public class Counter<T> implements Map<T, Long> {
     @Override
     public Set<Entry<T, Long>> entrySet() {
         return this.innerMap.entrySet();
+    }
+
+    @Override
+    public String toString() {
+        if (isEmpty()) {
+            return "Counter{}";
+        }
+
+        StringBuilder sb = new StringBuilder("Counter{");
+        for (var entry : innerMap.entrySet()) {
+            sb.append(entry.getKey())
+                    .append('=')
+                    .append(entry.getValue())
+                    .append(", ");
+        }
+
+        sb.setLength(sb.length() - 2);
+        sb.append('}');
+        return sb.toString();
     }
 }
