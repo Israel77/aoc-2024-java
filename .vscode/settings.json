@@ -1,4 +1,5 @@
 {
     "java.format.settings.url": "./style.xml",
-    "java.format.settings.profile": "ModifiedGoogleStyle"
+    "java.format.settings.profile": "ModifiedGoogleStyle",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

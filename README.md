@@ -30,13 +30,13 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 | 16  | ✅      | ✅    |
 | 17  | ✅      | ❌    |
 | 18  | ✅      | ✅    |
-| 19  | ➖      | ➖    |
-| 20  | ➖      | ➖    |
-| 21  | ➖      | ➖    |
-| 22  | ➖      | ➖    |
-| 23  | ➖      | ➖    |
-| 24  | ➖      | ➖    |
-| 25  | ➖      | ➖    |
+| 19  | ❌      | ❌    |
+| 20  | ❌      | ❌    |
+| 21  | ❌      | ❌    |
+| 22  | ❌      | ❌    |
+| 23  | ❌      | ❌    |
+| 24  | ❌      | ❌    |
+| 25  | ❌      | ❌    |
 
 ✅ - Solution implemented
 ❌ - Solution not implemented
